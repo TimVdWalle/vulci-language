@@ -1,9 +1,9 @@
 <!-- Phase: Phase 15 pre-collections language improvements -->
 <!-- Document ID: implementation-strategy -->
-<!-- Version: 4 -->
+<!-- Version: 5 -->
 <!-- Status: Active -->
 <!-- Authority: Reference-interpreter architecture, mechanics, and temporary constraints -->
-<!-- Supersedes: implementation-strategy v3 -->
+<!-- Supersedes: implementation-strategy v4 -->
 
 # Implementation Strategy
 
@@ -107,8 +107,9 @@ This is a reference-interpreter safeguard, not a general syntax rule.
 
 The reference interpreter loads only the selected entry source file initially.
 Additional source files are loaded when execution reaches their top-level import
-statements. Relative import paths are resolved from the directory containing the
-importing source file.
+statements. Imports are processed in source order and must form the accepted
+leading top-level import block in each source file. Relative import paths are
+resolved from the directory containing the importing source file.
 
 The interpreter keeps the active source-file import chain needed for relative
 resolution and the accepted depth safeguard. The entry file has depth `0`; an

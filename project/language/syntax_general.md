@@ -1,9 +1,9 @@
 <!-- Phase: Phase 15 pre-collections language improvements -->
 <!-- Document ID: syntax-general -->
-<!-- Version: 27 -->
+<!-- Version: 28 -->
 <!-- Status: Active -->
 <!-- Authority: Accepted non-collection-specific Vulci syntax -->
-<!-- Supersedes: syntax-general v26 -->
+<!-- Supersedes: syntax-general v27 -->
 
 # General Syntax Specification
 
@@ -1122,6 +1122,10 @@ Vulci does not infer the `.vci` extension from import syntax.
 
 Imports are valid only at the top level. They are not valid inside functions,
 methods, conditional branches, or other nested blocks.
+
+All imports in a source file must form a leading top-level block. Once any
+non-import top-level declaration or executable statement appears, no later
+`import` statement is valid.
 
 ---
 

@@ -1,9 +1,9 @@
 <!-- Phase: Phase 15 pre-collections language improvements -->
 <!-- Document ID: semantics-general -->
-<!-- Version: 24 -->
+<!-- Version: 25 -->
 <!-- Status: Active -->
 <!-- Authority: Accepted non-collection-specific Vulci semantics -->
-<!-- Supersedes: semantics-general v23 -->
+<!-- Supersedes: semantics-general v24 -->
 
 # Programming Language Semantics Specification
 
@@ -169,10 +169,17 @@ Every successful comparison produces a Boolean value.
 
 ## Equality
 
-The `==` and `!=` operators compare `Integer` values with `Integer` values,
-Boolean values with Boolean values, `str` values with `str` values, `null`,
-tuples, and enum values. Struct equality is defined with the struct semantics
-below. Collection equality is defined by the Collection Semantics Specification.
+When the operands of `==` or `!=` have different runtime types, the
+comparison is valid: `==` produces `false` and `!=` produces `true`, unless a
+more specific accepted equality rule applies. A runtime-type mismatch does not
+produce an equality error.
+
+For operands of the same runtime type, accepted equality semantics exist for
+`Integer` values, Boolean values, `str` values, `null`, tuples, and enum values.
+Struct equality is defined with the struct semantics below. Collection equality
+is defined by the Collection Semantics Specification. Value kinds whose
+same-type equality semantics are still undecided are not defined by this
+cross-type rule.
 
 Two strings are equal when they contain the same Unicode code-point sequence.
 String equality performs no Unicode normalization.
@@ -185,19 +192,21 @@ produce a mixed-type equality error.
 Two tuples with different arity are unequal. Two tuples with the same arity are
 equal only when every corresponding member is equal under the normal Vulci
 equality rules. Tuple comparison is recursive, so nested tuples follow the same
-rule. If comparing a corresponding member is invalid under the normal equality
-rules, the tuple comparison produces that normal equality error rather than
-silently treating the members as unequal.
+rule. Corresponding members with different runtime types are unequal under the
+general cross-type equality rule. If a member comparison is invalid for a value
+kind whose same-type equality semantics are not accepted, the tuple comparison
+produces that normal equality error rather than silently treating the members as
+unequal.
 
 Two enum values are equal only when both their declaring enum type and member
 match. Enum values from different enum types are unequal even when their member
 names match.
 
-Where an accepted equality rule explicitly defines cross-type or structural
-behaviour, that rule takes precedence. Otherwise, equality operands of different
-runtime types produce a runtime error. Enum equality accepts values from
-different enum types and produces `false` for them. For every successful
-equality comparison, `!=` is the inverse of `==`.
+Different runtime types are unequal by default. Where an accepted equality rule
+defines more specific nominal or structural behaviour, that rule takes
+precedence. Enum equality accepts values from different enum types and produces
+`false` for them. For every valid equality comparison, `!=` is the inverse of
+`==`.
 
 Equality operators do not perform implicit type conversions.
 
@@ -414,9 +423,9 @@ Different branches may produce values of different runtime types. A typed
 context must allow every possible branch result.
 
 `null` is a literal value and is introduced in Phase 6. `print(null)` outputs
-`null`. Equality is valid only between values of the same runtime type. Therefore
-`null == null` is `true`, `null != null` is `false`, and comparing `null` with a
-non-`null` value is a runtime type error.
+`null`. `null == null` is `true` and `null != null` is `false`. Comparing `null`
+with a non-`null` value is valid: `==` produces `false` and `!=` produces `true`,
+without implicit conversion.
 
 ---
 
@@ -887,7 +896,10 @@ later phase than tuples, anonymous objects, and structs.
 
 A Vulci program begins with one entry source file. Additional source files become
 part of the program only when execution reaches a top-level `import` statement.
-The runtime does not scan the entry file's directory for additional Vulci files.
+Every source file places all of its imports before any non-import top-level
+declaration or executable statement. Once a non-import top-level item appears,
+a later import is invalid. The runtime does not scan the entry file's directory
+for additional Vulci files.
 
 A source-file boundary does not create a module or namespace. Imported files use
 the same existing program namespaces as the importing file.
@@ -907,10 +919,11 @@ file. Top-level code in the imported file then executes from top to bottom. When
 it finishes, execution continues with the statement after the import in the
 importing file.
 
-Declarations that exist only in an imported file are not available before
-execution reaches that import. Global variables created by imported top-level
-code are ordinary program globals and exist only after execution reaches their
-creating assignment, under the normal global-variable rules.
+Declarations that exist only in an imported file become available when that
+import is processed. Imports later in the same leading import sequence have not
+yet contributed their declarations. Global variables created by imported
+top-level code are ordinary program globals and exist only after execution
+reaches their creating assignment, under the normal global-variable rules.
 
 Imported files may themselves import other source files. Vulci does not track
 whether a file was previously imported and does not perform duplicate-import or
