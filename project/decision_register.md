@@ -1,7 +1,7 @@
-<!-- Phase: Phase 14 enum source-of-truth update -->
+<!-- Phase: Phase 15 pre-collections language improvements -->
 <!-- Document ID: decision-register -->
-<!-- Version: 9 -->
-<!-- Supersedes: decision-register v8 -->
+<!-- Version: 11 -->
+<!-- Supersedes: decision-register v10 -->
 <!-- Status: Active -->
 <!-- Authority: Status and history of non-accepted, rejected, deferred, and superseded design items -->
 
@@ -33,7 +33,7 @@ future features remain in their owning syntax or semantics specifications.
 - `dec-syn-012` — Function-reference syntax — **Undecided**
 - `dec-syn-013` — Unary `+` — **Undecided**
 - `dec-syn-014` — Enum syntax — **Superseded** by the accepted Phase 14 enum syntax in the General Syntax Specification
-- `dec-syn-015` — Module/package syntax — **Undecided**
+- `dec-syn-015` — Module/package syntax beyond the accepted transparent source-file imports — **Undecided**
 - `dec-syn-016` — `~` precedence and associativity — **Superseded** by the accepted rule that `~` shares the left-associative `+`/`-` precedence level
 - `dec-syn-017` — Multiline string indentation stripping details — **Superseded** by the accepted exact common-whitespace-prefix rule
 - `dec-syn-018` — Phase 10 string and interpolation diagnostic codes — **Superseded** by the accepted short stable codes
@@ -54,7 +54,7 @@ existing deferred match/switch and pattern-matching entries.
 
 - `dec-sem-001` — Decimal semantics — **Deferred**
 - `dec-sem-002` — Recursive copying of compound values — **Partially superseded** for tuples, anonymous objects, and structs by their accepted assignment-semantics rules; remains **Undecided** for other future compound types. Enum value semantics are accepted separately in the General Semantics Specification
-- `dec-sem-003` — Compound-value and class equality — **Partially superseded** for structs and collections by their accepted equality rules; remains **Undecided** for tuples, anonymous objects, classes, and other future compound types. Enum equality is accepted separately in the General Semantics Specification
+- `dec-sem-003` — Compound-value and class equality — **Partially superseded** for tuples, structs, and collections by their accepted equality rules; remains **Undecided** for anonymous objects, classes, and other future compound types. Enum equality is accepted separately in the General Semantics Specification
 - `dec-sem-004` — Field mutability — **Superseded** by the accepted rules that anonymous-object fields are immutable and struct fields are mutable with value semantics; remains undecided only for future field-bearing types such as classes
 - `dec-sem-005` — Field defaults and required/optional fields — **Partially superseded** for function parameters and struct fields by the accepted rules in the general semantics specification; remains **Undecided** for classes and future field-bearing types
 - `dec-sem-006` — Struct/class construction validation and diagnostics — **Partially superseded** for structs by the accepted construction and diagnostic rules in the general semantics specification; remains **Undecided** for classes
@@ -64,7 +64,7 @@ existing deferred match/switch and pattern-matching entries.
 - `dec-sem-010a` — Empty tuple representation — **Superseded** by the accepted rule that Vulci does not support empty tuples
 - `dec-sem-010b` — Empty anonymous-object representation — **Rejected**; anonymous objects must contain at least one field
 - `dec-sem-011` — Nested-function capture, rebinding, and closure lifetime — **Undecided**
-- `dec-sem-012` — Default expressions depending on earlier parameters — **Deferred until `ph22` design**
+- `dec-sem-012` — Default expressions depending on earlier parameters — **Deferred until `ph23` design**
 - `dec-sem-013` — Invalid string member-call diagnostic categories — **Superseded** by the accepted general member and argument diagnostic codes
 - `dec-sem-014` — Tuple-specific indexing diagnostic categories — **Rejected** in favour of shared general indexing diagnostics
 
@@ -88,14 +88,14 @@ collection processing, but no replacement decision is accepted.
 - `dec-col-sem-004` — Collection conversion operations — **Undecided**
 - `dec-col-sem-005` — Exact `map()` result semantics — **Undecided**
 - `dec-col-sem-006` — Bulk additions and immutable update/removal operations — **Undecided**
-- `dec-col-sem-007` — Exact `reduce()` semantics — **Deferred until `ph28` design**
-- `dec-col-sem-008` — Exact `group()` semantics — **Deferred until `ph29` design**
+- `dec-col-sem-007` — Exact `reduce()` semantics — **Deferred until `ph29` design**
+- `dec-col-sem-008` — Exact `group()` semantics — **Deferred until `ph30` design**
 - `dec-col-sem-009` — Exact `any()` and `all()` semantics — **Undecided**
 - `dec-col-sem-010` — Contextual loop metadata and nested-loop behaviour — **Deferred**
 - `dec-col-sem-011` — Capabilities system details and boundary-type interaction — **Deferred**
 - `dec-col-sem-012` — User-defined collection-capable types — **Deferred**
 - `dec-col-sem-013` — Pattern-matching unmatched-case behaviour — **Deferred**
-- `dec-col-sem-014` — Tuple map keys — **Deferred until equality/key semantics exist**
+- `dec-col-sem-014` — Tuple map keys — **Deferred**; tuple equality is accepted, but tuple map-key eligibility and key semantics remain undecided
 - `dec-col-sem-015` — Explicit collection mutability — **Deferred**
 
 ## DEC-STRUCT-IMPLEMENTATION-PHASING

@@ -1,9 +1,9 @@
-<!-- Phase: Phase 14 enum source-of-truth update -->
+<!-- Phase: Phase 15 pre-collections language improvements -->
 <!-- Document ID: semantics-collections -->
-<!-- Version: 9 -->
+<!-- Version: 11 -->
 <!-- Status: Active -->
 <!-- Authority: Accepted string and collection semantics -->
-<!-- Supersedes: semantics-collections v8 -->
+<!-- Supersedes: semantics-collections v10 -->
 
 # Collection Semantics Specification
 
@@ -216,6 +216,18 @@ fn do_something(collection values) {
 }
 ```
 
+The general `is Type` operator uses the same collection type-matching rules as
+function-boundary validation. A bare `list`, `set`, or `map` type matches a value
+of that concrete collection type without restricting its contained types. A
+typed collection form such as `list<int>`, `set<int>`, or `map<str, int>` matches
+only when the concrete collection type matches and every contained value or map
+entry satisfies the declared type arguments. The broad `collection` type matches
+`list`, `set`, and `map` values and does not match strings or non-collection
+values.
+
+The `isList`, `isSet`, and `isMap` properties remain accepted alongside the
+general `is Type` operator.
+
 Pattern matching for runtime type handling is deferred to a later phase.
 
 ---
@@ -283,7 +295,7 @@ Future enum map-key identity uses the normal enum equality identity: both the
 declaring enum type and member must match. For example, `Status.Pending` and
 `PaymentState.Pending` are distinct keys. Phase 14 establishes this identity but
 does not implement maps or enum map-key operations; actual map-key support remains
-part of Phase 15.
+part of Phase 16.
 
 The following are not initially valid map keys:
 
@@ -293,8 +305,9 @@ The following are not initially valid map keys:
 - tuples
 - other complex values
 
-Tuple keys are a potential future feature. They may be considered only after
-tuple equality and map-key semantics have been explicitly accepted.
+Tuple equality is accepted, but tuple keys remain a potential future feature.
+They may be considered only after tuple map-key eligibility and key semantics
+have been explicitly accepted.
 
 ---
 

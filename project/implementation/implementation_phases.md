@@ -1,9 +1,9 @@
-<!-- Phase: Phase 14A global-variable and editor-support correction -->
+<!-- Phase: Phase 15 pre-collections language improvements -->
 <!-- Document ID: implementation-phases -->
-<!-- Version: 15 -->
+<!-- Version: 17 -->
 <!-- Status: Active -->
 <!-- Authority: Implementation order, phase scope, dependencies, and completion criteria -->
-<!-- Supersedes: implementation-phases v14 -->
+<!-- Supersedes: implementation-phases v16 -->
 
 # Implementation Phases
 
@@ -287,7 +287,7 @@ semantics have been explicitly agreed.
 - Lexer, parser, AST, evaluator, runtime-value, type-validation, equality,
   printing, interpolation, forward-reference, diagnostic, regression, coverage,
   and smoke tests
-- No Phase 15 map or other collection implementation
+- No Phase 16 map or other collection implementation
 
 **Result:** Programs can model closed sets of named alternatives.
 
@@ -308,11 +308,40 @@ and editors can style important Vulci categories through their colour schemes.
 
 ---
 
-## `ph15` Collections — Core
+## `ph15` Pre-collections language improvements — Core
+
+- `ph15_1` Usable `null` equality: `null` compares successfully with any value
+  through `==` and `!=` under the accepted null-equality rules
+- `ph15_2` Structural tuple equality, including arity checks, recursive member
+  equality, nested tuples, and normal member-level equality errors
+- `ph15_3` General `value is Type` operator using Vulci's normal type-matching
+  rules, with `is` reserved and excluded from chained comparisons
+- `ph15_4` Transparent multi-file programs through top-level relative `.vci`
+  imports written with single-quoted paths
+- `vulci .` selects `./main.vci`; `vulci <source-file>` may select any source
+  file directly
+- Imports resolve relative to the importing file, execute imported top-level code
+  at the import point, and use the same program namespaces without creating
+  modules or file namespaces
+- No directory scanning, extension inference, duplicate-import cache, or cycle
+  detection
+- No module/package system in Phase 15; richer module/package work remains
+  separately tracked in `ph31`
+- Active import depth is limited to `64`, with the entry file at depth `0`
+- No collection implementation in Phase 15
+
+**Result:** Programs gain more useful equality and type inspection and can be
+organised across multiple source files before collection implementation begins.
+
+---
+
+## `ph16` Collections — Core
 
 - `lf20` Unified collection model
 - Distinct `list`, `set`, and `map` values with shared operation names where appropriate
 - Broad `collection` boundary type with runtime concrete-type behaviour
+- Extend the general `is Type` operator to the accepted concrete, typed, and broad
+  collection type forms
 - Collection literals, including trailing commas
 - Zero-based list access and keyed map access
 - Sets use insertion order and have no positional access
@@ -332,7 +361,7 @@ and editors can style important Vulci categories through their colour schemes.
 
 ---
 
-## `ph16` Collection iteration — Core
+## `ph17` Collection iteration — Core
 
 **Design-blocked:** Exact `each` collection-expression, item-binding, and remaining
 loop semantics must be agreed first.
@@ -346,7 +375,7 @@ loop semantics must be agreed first.
 
 ---
 
-## `ph17` Loops — Core
+## `ph18` Loops — Core
 
 **Design-blocked:** Loop syntax and semantics must be agreed first.
 
@@ -356,7 +385,7 @@ loop semantics must be agreed first.
 
 ---
 
-## `ph18` Environment access — Standard library
+## `ph19` Environment access — Standard library
 
 - `lib01` Environment variables
 
@@ -364,7 +393,7 @@ loop semantics must be agreed first.
 
 ---
 
-## `ph19` Command-line input — Standard library
+## `ph20` Command-line input — Standard library
 
 - `lib02` Program arguments
 
@@ -372,7 +401,7 @@ loop semantics must be agreed first.
 
 ---
 
-## `ph20` File handling — Standard library
+## `ph21` File handling — Standard library
 
 - `lib03` Read files
 - Write files
@@ -382,7 +411,7 @@ loop semantics must be agreed first.
 
 ---
 
-## `ph21` Destructuring — Core
+## `ph22` Destructuring — Core
 
 **Design-blocked:** Exact destructuring syntax and semantics must be agreed first.
 
@@ -392,7 +421,7 @@ loop semantics must be agreed first.
 
 ---
 
-## `ph22` Dependent defaults — Core
+## `ph23` Dependent defaults — Core
 
 **Design-blocked:** Evaluation semantics for dependent defaults must be agreed first.
 
@@ -402,7 +431,7 @@ loop semantics must be agreed first.
 
 ---
 
-## `ph23` Traits — Core
+## `ph24` Traits — Core
 
 **Design-blocked:** Trait syntax and semantics must be agreed first.
 
@@ -413,7 +442,7 @@ loop semantics must be agreed first.
 
 ---
 
-## `ph24` JSON — Standard library
+## `ph25` JSON — Standard library
 
 - `lib05` Parse JSON
 - Serialize JSON
@@ -422,7 +451,7 @@ loop semantics must be agreed first.
 
 ---
 
-## `ph25` HTTP — Standard library
+## `ph26` HTTP — Standard library
 
 - `lib04` HTTP requests
 - Methods
@@ -450,7 +479,7 @@ Access to and mutation of enclosing variables remain undecided.
 
 ---
 
-## `ph26` Function values and lambdas — Core
+## `ph27` Function values and lambdas — Core
 
 **Design-blocked:** Function-reference and lambda syntax and semantics must be agreed first.
 
@@ -463,7 +492,7 @@ Access to and mutation of enclosing variables remain undecided.
 
 ---
 
-## `ph27` Functional collection operations — Core
+## `ph28` Functional collection operations — Core
 
 **Design-blocked:** Exact anonymous-function syntax must be agreed first.
 
@@ -475,7 +504,7 @@ Access to and mutation of enclosing variables remain undecided.
 
 ---
 
-## `ph28` Reduction — Core
+## `ph29` Reduction — Core
 
 **Design-blocked:** Exact `reduce()` syntax and semantics must be agreed first.
 
@@ -485,7 +514,7 @@ Access to and mutation of enclosing variables remain undecided.
 
 ---
 
-## `ph29` Advanced collection operations — Core
+## `ph30` Advanced collection operations — Core
 
 **Design-blocked:** Exact `group()` syntax and semantics must be agreed first.
 
@@ -496,7 +525,7 @@ Access to and mutation of enclosing variables remain undecided.
 
 ---
 
-## `ph30` Imports and modules — Core
+## `ph31` Imports and modules — Core
 
 **Design-blocked:** Module and import semantics must be agreed first.
 
@@ -507,7 +536,7 @@ Access to and mutation of enclosing variables remain undecided.
 
 ---
 
-## `ph31` Classes — Core
+## `ph32` Classes — Core
 
 **Design-blocked:** Class construction, inheritance, visibility, equality, and dispatch semantics must be agreed first.
 
@@ -521,7 +550,7 @@ Access to and mutation of enclosing variables remain undecided.
 
 ---
 
-## `ph32` Decimals — Core
+## `ph33` Decimals — Core
 
 **Design-blocked:** Decimal representation and arithmetic semantics must be agreed first.
 
@@ -533,11 +562,21 @@ Access to and mutation of enclosing variables remain undecided.
 
 ---
 
-## `ph33` Database access — Standard library
+## `ph34` Database access — Standard library
 
 - `lib06` Initial database support
 
 **Result:** Programs can store and query structured persistent data.
+
+---
+
+## Future assertion support — Core — Exact phase undecided
+
+- `future_assert` Programmer assertion support (`assert`)
+- Exact assertion syntax and semantics are not yet accepted
+
+**Result:** Assertion support remains visible for future design without becoming
+part of Phase 15.
 
 ---
 
