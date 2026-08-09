@@ -1,9 +1,9 @@
 <!-- Phase: Phase 15 pre-collections language improvements -->
 <!-- Document ID: implementation-phases -->
-<!-- Version: 17 -->
+<!-- Version: 18 -->
 <!-- Status: Active -->
 <!-- Authority: Implementation order, phase scope, dependencies, and completion criteria -->
-<!-- Supersedes: implementation-phases v16 -->
+<!-- Supersedes: implementation-phases v17 -->
 
 # Implementation Phases
 
@@ -310,16 +310,21 @@ and editors can style important Vulci categories through their colour schemes.
 
 ## `ph15` Pre-collections language improvements — Core
 
-- `ph15_1` Usable `null` equality: `null` compares successfully with any value
-  through `==` and `!=` under the accepted null-equality rules
+- `ph15_1` Usable `null` equality and general cross-runtime-type equality:
+  runtime-type mismatches compare successfully through `==` and `!=`, are
+  unequal, and perform no implicit conversion
 - `ph15_2` Structural tuple equality, including arity checks, recursive member
-  equality, nested tuples, and normal member-level equality errors
+  equality, nested tuples, cross-runtime-type members comparing unequal, and
+  normal equality errors only where same-type equality semantics remain
+  unsupported
 - `ph15_3` General `value is Type` operator using Vulci's normal type-matching
   rules, with `is` reserved and excluded from chained comparisons
 - `ph15_4` Transparent multi-file programs through top-level relative `.vci`
   imports written with single-quoted paths
 - `vulci .` selects `./main.vci`; `vulci <source-file>` may select any source
   file directly
+- Imports form a leading top-level block in every source file; no import may
+  appear after a non-import top-level declaration or executable statement
 - Imports resolve relative to the importing file, execute imported top-level code
   at the import point, and use the same program namespaces without creating
   modules or file namespaces
