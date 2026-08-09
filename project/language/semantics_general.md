@@ -1,9 +1,9 @@
-<!-- Phase: Phase 14A global-variable and editor-support correction -->
+<!-- Phase: Phase 15 pre-collections language improvements -->
 <!-- Document ID: semantics-general -->
-<!-- Version: 22 -->
+<!-- Version: 24 -->
 <!-- Status: Active -->
 <!-- Authority: Accepted non-collection-specific Vulci semantics -->
-<!-- Supersedes: semantics-general v21 -->
+<!-- Supersedes: semantics-general v23 -->
 
 # Programming Language Semantics Specification
 
@@ -170,21 +170,52 @@ Every successful comparison produces a Boolean value.
 ## Equality
 
 The `==` and `!=` operators compare `Integer` values with `Integer` values,
-Boolean values with Boolean values, `str` values with `str` values, and enum
-values with enum values.
+Boolean values with Boolean values, `str` values with `str` values, `null`,
+tuples, and enum values. Struct equality is defined with the struct semantics
+below. Collection equality is defined by the Collection Semantics Specification.
 
 Two strings are equal when they contain the same Unicode code-point sequence.
 String equality performs no Unicode normalization.
+
+`null == null` is `true` and `null != null` is `false`. When exactly one operand
+is `null`, `==` produces `false` and `!=` produces `true`, regardless of the
+other operand's runtime type. Comparing `null` with a non-null value does not
+produce a mixed-type equality error.
+
+Two tuples with different arity are unequal. Two tuples with the same arity are
+equal only when every corresponding member is equal under the normal Vulci
+equality rules. Tuple comparison is recursive, so nested tuples follow the same
+rule. If comparing a corresponding member is invalid under the normal equality
+rules, the tuple comparison produces that normal equality error rather than
+silently treating the members as unequal.
 
 Two enum values are equal only when both their declaring enum type and member
 match. Enum values from different enum types are unequal even when their member
 names match.
 
-For non-enum values, equality operands of different runtime types produce a
-runtime error. Enum equality accepts values from different enum types and
-produces `false` for them. `!=` is the inverse of `==`.
+Where an accepted equality rule explicitly defines cross-type or structural
+behaviour, that rule takes precedence. Otherwise, equality operands of different
+runtime types produce a runtime error. Enum equality accepts values from
+different enum types and produces `false` for them. For every successful
+equality comparison, `!=` is the inverse of `==`.
 
 Equality operators do not perform implicit type conversions.
+
+## Type Inspection with `is`
+
+`value is Type` evaluates to a Boolean value. It is `true` exactly when the
+runtime value would satisfy `Type` under Vulci's normal type-validation rules,
+and `false` otherwise. The operator does not perform implicit conversion.
+
+The right-hand side is a type, not a runtime expression. `any` therefore matches
+every value, `null` matches only the null value, unions match when the value
+satisfies at least one member type, and declared struct, enum, and tuple types
+use their existing type-matching rules. Collection-specific type matching is
+defined by the Collection Semantics Specification.
+
+An unknown type name is an error rather than a `false` result and follows the
+existing rule that unknown type names are reported as early as Vulci can
+reliably determine that they do not exist.
 
 ## Ordering
 
@@ -577,6 +608,9 @@ printed recursively.
 ((1, 2), 3)
 ```
 
+Tuples support structural equality through `==` and `!=` under the comparison
+rules defined above.
+
 Tuples cannot declare methods and cannot inherit.
 
 ### Tuple Types
@@ -846,5 +880,49 @@ Classes may declare methods and may inherit.
 
 Class semantics are accepted for the language design but are implemented in a
 later phase than tuples, anonymous objects, and structs.
+
+---
+
+# 21. Source Files and Imports
+
+A Vulci program begins with one entry source file. Additional source files become
+part of the program only when execution reaches a top-level `import` statement.
+The runtime does not scan the entry file's directory for additional Vulci files.
+
+A source-file boundary does not create a module or namespace. Imported files use
+the same existing program namespaces as the importing file.
+
+When execution reaches an import, Vulci resolves the literal path relative to
+the directory containing the importing source file. `helpers.vci` and
+`./helpers.vci` therefore resolve from the same directory, while `../` resolves
+from the parent directory. The literal path is used exactly: Vulci does not infer
+the `.vci` extension, search for a module or package with the same name, or scan
+directories for source files.
+
+The imported file is then processed as part of the same program. Before its
+top-level execution begins, its top-level function, struct, and enum declarations
+become available under the same rules as other declarations in that program.
+Those declarations retain their normal forward availability within the imported
+file. Top-level code in the imported file then executes from top to bottom. When
+it finishes, execution continues with the statement after the import in the
+importing file.
+
+Declarations that exist only in an imported file are not available before
+execution reaches that import. Global variables created by imported top-level
+code are ordinary program globals and exist only after execution reaches their
+creating assignment, under the normal global-variable rules.
+
+Imported files may themselves import other source files. Vulci does not track
+whether a file was previously imported and does not perform duplicate-import or
+cycle detection. Reaching the same import again processes the file again. Normal
+name-collision rules and normal top-level side effects therefore apply again.
+
+Import depth is measured on the active import chain. The entry file has depth
+`0`. Imported files may be entered through depth `64`; attempting to enter an
+imported file at depth `65` produces an import-depth error and stops execution.
+The depth safeguard does not otherwise change repeated-import behaviour.
+
+Running an entry file whose top level contains only declarations runs no
+executable top-level expressions.
 
 ---

@@ -1,9 +1,9 @@
-<!-- Phase: Phase 14A global-variable and editor-support correction -->
+<!-- Phase: Phase 15 pre-collections language improvements -->
 <!-- Document ID: implementation-strategy -->
-<!-- Version: 2 -->
+<!-- Version: 4 -->
 <!-- Status: Active -->
 <!-- Authority: Reference-interpreter architecture, mechanics, and temporary constraints -->
-<!-- Supersedes: implementation-strategy v1 -->
+<!-- Supersedes: implementation-strategy v3 -->
 
 # Implementation Strategy
 
@@ -103,11 +103,34 @@ This is a reference-interpreter safeguard, not a general syntax rule.
 
 ---
 
+## `impl-runtime-003` — Source-file import loading
+
+The reference interpreter loads only the selected entry source file initially.
+Additional source files are loaded when execution reaches their top-level import
+statements. Relative import paths are resolved from the directory containing the
+importing source file.
+
+The interpreter keeps the active source-file import chain needed for relative
+resolution and the accepted depth safeguard. The entry file has depth `0`; an
+imported file may be entered through depth `64`, and an attempted depth `65`
+entry must produce the Vulci import-depth error rather than continue recursing.
+
+The active import chain is not a duplicate-import cache. The reference
+interpreter does not deduplicate imports or perform separate cycle detection.
+
+---
+
 ## Distribution
 
-The official command-line interface is:
+From Phase 15, the official command-line interface accepts either the current
+directory or a source-file entry path:
 
-    mylang <source-file>
+    vulci .
+    vulci <source-file>
+
+`vulci .` selects `./main.vci`. `vulci <source-file>` runs the specified source
+file as the entry file. The CLI does not scan the directory for additional Vulci
+source files; further files are reached through imports.
 
 Production releases should be distributed as a standalone executable so
 users are not be required to install Node.js.

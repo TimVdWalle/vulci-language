@@ -1,9 +1,9 @@
-<!-- Phase: Phase 14A global-variable and editor-support correction -->
+<!-- Phase: Phase 15 pre-collections language improvements -->
 <!-- Document ID: syntax-general -->
-<!-- Version: 25 -->
+<!-- Version: 27 -->
 <!-- Status: Active -->
 <!-- Authority: Accepted non-collection-specific Vulci syntax -->
-<!-- Supersedes: syntax-general v24 -->
+<!-- Supersedes: syntax-general v26 -->
 
 # General Syntax Specification
 
@@ -31,7 +31,8 @@ if (...) {
 
 ### Decision
 
-Execution starts at the top level of the source file.
+Execution starts at the top level of the program's entry source file.
+Additional source files are reached through top-level imports.
 
 ### Rationale
 
@@ -344,13 +345,22 @@ is interpreted as:
 <=
 >
 >=
+value is Type
 ```
+
+`is` is a reserved keyword and cannot be used as an identifier. Its right-hand
+side is a Vulci type, not a value expression. Any type form accepted by Vulci
+may be used there. Collection-specific type forms are defined by the Collection
+Syntax Specification. Vulci does not have an `is not` operator; negate a type
+test with `not`, for example `not (value is int)`.
 
 ### Precedence
 
 All comparison operators have lower precedence than every arithmetic operator.
 
-All six comparison operators share one precedence level.
+The six equality and ordering comparison operators share one precedence level.
+`is` shares that precedence level but does not participate in chained
+comparisons.
 
 ```text
 1 + 2 < 4
@@ -389,8 +399,21 @@ unparenthesized chained comparison.
 The preceding expression is invalid because it mixes ordering and equality
 operators without parentheses.
 
-Parentheses may separate comparison expressions, allowing an ordering
-comparison result to participate in an equality comparison.
+`is` cannot be combined with another comparison operator in one
+unparenthesized comparison expression.
+
+```text
+value is int == true
+```
+
+The preceding expression is invalid. Parentheses may make the two comparisons
+explicit.
+
+```text
+(value is int) == true
+```
+
+Parentheses may likewise separate ordering and equality comparison expressions.
 
 ```text
 (1 < 2) == true
@@ -1078,11 +1101,27 @@ expression.
 
 # 11. Imports
 
-Import keyword:
+`import` is a top-level statement whose operand names another Vulci source
+file.
+
+The imported path is written as a single-line, single-quoted string literal and
+must include the `.vci` extension.
 
 ```text
-import math
+import 'helpers.vci'
+import './helpers.vci'
+import 'users/validation.vci'
+import '../shared/helpers.vci'
 ```
+
+Import paths are relative. A path without `./` or `../` is valid and is relative
+in the same way as an explicit `./` path. Absolute import paths are invalid.
+Path segments use `/` in Vulci source on every platform.
+
+Vulci does not infer the `.vci` extension from import syntax.
+
+Imports are valid only at the top level. They are not valid inside functions,
+methods, conditional branches, or other nested blocks.
 
 ---
 

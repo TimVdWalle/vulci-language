@@ -1,9 +1,9 @@
-<!-- Phase: Phase 10 string design completion -->
+<!-- Phase: Phase 15 pre-collections language improvements -->
 <!-- Document ID: syntax-collections -->
-<!-- Version: 8 -->
+<!-- Version: 10 -->
 <!-- Status: Active -->
 <!-- Authority: Accepted string- and collection-specific Vulci syntax -->
-<!-- Supersedes: syntax-collections v7 -->
+<!-- Supersedes: syntax-collections v9 -->
 
 # Vulci Collection Syntax Specification
 
@@ -121,6 +121,19 @@ values.isList
 values.isSet
 values.isMap
 ```
+
+Collection type forms may also be used with the general `is Type` operator
+defined by the General Syntax Specification.
+
+```text
+values is list
+values is set<int>
+values is map<str, int>
+values is collection
+```
+
+The `isList`, `isSet`, and `isMap` properties remain accepted alongside the
+general `is Type` operator.
 
 ---
 
