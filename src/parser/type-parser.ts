@@ -1,4 +1,4 @@
-// Phase 14
+// Phase 15
 
 import { TypeAnnotation, TypeMember } from "../ast.js";
 import { Token, TokenType } from "../token.js";
@@ -106,7 +106,7 @@ export abstract class TypeParser extends ParserContext {
   }
 
   protected validateTypeName(token: Token): void {
-    if (!this.knownTypeNames.has(token.lexeme)) {
+    if (!this.allowUnknownTypeNames && !this.knownTypeNames.has(token.lexeme)) {
       throw this.error(token, `Unknown type name '${token.lexeme}'.`);
     }
   }

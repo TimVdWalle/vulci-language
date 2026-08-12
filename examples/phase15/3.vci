@@ -1,0 +1,9 @@
+// Phase 15
+// Expected output:
+// 15
+// true
+
+import 'imported.vci'
+
+print(value: phase15_value())
+print(value: $phase15_imported_value is int)

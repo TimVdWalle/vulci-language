@@ -1,3 +1,5 @@
+// Phase 15
+
 import assert from "node:assert/strict";
 import test from "node:test";
 import { Environment } from "../src/environment.js";
@@ -276,15 +278,15 @@ test("evaluates Boolean equality", () => {
     value: false,
   });
 });
-test("rejects equality operands with different types", () => {
-  assert.throws(
-    () => evaluate("1 == true", new Environment()),
-    /Operator '==' requires operands of the same type\. at 1:3/,
-  );
-  assert.throws(
-    () => evaluate("false != 0", new Environment()),
-    /Operator '!=' requires operands of the same type\. at 1:7/,
-  );
+test("compares operands with different runtime types as unequal", () => {
+  assert.deepEqual(evaluate("1 == true", new Environment()), {
+    type: "Boolean",
+    value: false,
+  });
+  assert.deepEqual(evaluate("false != 0", new Environment()), {
+    type: "Boolean",
+    value: true,
+  });
 });
 test("evaluates ordering comparisons", () => {
   const cases: Array<[string, boolean]> = [

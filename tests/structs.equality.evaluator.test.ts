@@ -1,4 +1,4 @@
-// Phase 13
+// Phase 15
 
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -82,24 +82,22 @@ Value(number: 1) == Value(number: 1) == Value(number: 1)`),
   );
 });
 
-test("rejects equality between structs and other runtime types", () => {
-  assert.throws(
-    () =>
-      evaluate(`struct Value {
+test("compares structs and other runtime types as unequal", () => {
+  assert.deepEqual(
+    evaluate(`struct Value {
   int number
 }
 Value(number: 1) == 1`),
-    /requires operands of the same type/,
+    { type: "Boolean", value: false },
   );
 });
 
 test("uses normal field equality rules recursively", () => {
-  assert.throws(
-    () =>
-      evaluate(`struct Pair {
+  assert.deepEqual(
+    evaluate(`struct Pair {
   tuple(int, int) values
 }
 Pair(values: (1, 2)) == Pair(values: (1, 2))`),
-    /requires operands of the same type/,
+    { type: "Boolean", value: true },
   );
 });

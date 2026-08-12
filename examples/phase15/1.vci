@@ -1,0 +1,16 @@
+// Phase 15
+// Expected output:
+// true
+// true
+// true
+// true
+
+$same_tuple = (1, "two", true) == (1, "two", true)
+$different_tuple = (1, (2, false)) != (1, (2, true))
+$different_arity = (1, 2) != (1, 2, 3)
+$different_runtime_types = null != 0 and 1 != true
+
+print(value: $same_tuple)
+print(value: $different_tuple)
+print(value: $different_arity)
+print(value: $different_runtime_types)

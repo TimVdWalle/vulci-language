@@ -1,4 +1,4 @@
-// Phase 14
+// Phase 15
 
 import { Expression } from "../ast.js";
 import { Token, TokenType } from "../token.js";
@@ -10,9 +10,33 @@ export abstract class ParserContext {
   protected readonly knownTypeNames = new Set<string>(BUILT_IN_TYPE_NAMES);
   protected readonly knownStructNames = new Set<string>();
   protected readonly knownEnumNames = new Set<string>();
+  protected readonly allowUnknownTypeNames: boolean;
   protected current = 0;
 
-  constructor(protected readonly tokens: Token[]) {}
+  constructor(
+    protected readonly tokens: Token[],
+    options: ParserOptions = {},
+  ) {
+    for (const name of options.structNames ?? []) {
+      this.registerStructName(name);
+    }
+
+    for (const name of options.enumNames ?? []) {
+      this.registerEnumName(name);
+    }
+
+    this.allowUnknownTypeNames =
+      options.allowUnknownTypeNames ??
+      tokens.some((token) => token.type === TokenType.Import);
+  }
+
+  protected currentParserOptions(): ParserOptions {
+    return {
+      structNames: this.knownStructNames,
+      enumNames: this.knownEnumNames,
+      allowUnknownTypeNames: this.allowUnknownTypeNames,
+    };
+  }
 
   protected registerStructName(name: string): void {
     this.knownStructNames.add(name);
@@ -158,4 +182,10 @@ export abstract class ParserContext {
   protected error(token: Token, message: string): Error {
     return sourceError(token, message);
   }
+}
+
+export interface ParserOptions {
+  structNames?: Iterable<string>;
+  enumNames?: Iterable<string>;
+  allowUnknownTypeNames?: boolean;
 }

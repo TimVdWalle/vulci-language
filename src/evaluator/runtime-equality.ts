@@ -1,4 +1,4 @@
-// Phase 14
+// Phase 15
 
 import { RuntimeValue } from "../runtime-value.js";
 
@@ -9,7 +9,7 @@ export function runtimeValuesEqual(
   right: RuntimeValue,
 ): boolean {
   if (left.type !== right.type) {
-    throw new RuntimeEqualityError("Operands have different runtime types.");
+    return false;
   }
 
   switch (left.type) {
@@ -41,6 +41,12 @@ export function runtimeValuesEqual(
         left.memberName === right.memberName
       );
     case "Tuple":
+      if (right.type !== "Tuple") return false;
+      if (left.members.length !== right.members.length) return false;
+
+      return left.members.every((member, index) =>
+        runtimeValuesEqual(member, right.members[index]!),
+      );
     case "AnonymousObject":
     case "NativeFunction":
       throw new RuntimeEqualityError(

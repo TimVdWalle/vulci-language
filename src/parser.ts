@@ -1,12 +1,18 @@
-// Phase 14
+// Phase 15
 
-import { ExpressionStatement, Program, Statement } from "./ast.js";
+import {
+  ExpressionStatement,
+  ImportStatement,
+  Program,
+  Statement,
+} from "./ast.js";
 import { ExpressionParser } from "./parser/expression-parser.js";
+import { ParserOptions } from "./parser/parser-context.js";
 import { Token, TokenType } from "./token.js";
 
 export class Parser extends ExpressionParser {
-  constructor(tokens: Token[]) {
-    super(tokens);
+  constructor(tokens: Token[], options: ParserOptions = {}) {
+    super(tokens, options);
     this.discoverStructNames(tokens);
     this.discoverEnumNames(tokens);
   }
@@ -21,11 +27,25 @@ export class Parser extends ExpressionParser {
 
   public parse(): Program {
     const statements: Statement[] = [];
+    let encounteredNonImport = false;
 
     this.skipNewlines();
 
     while (!this.isAtEnd()) {
-      statements.push(this.statement());
+      const statement = this.statement();
+
+      if (statement.type === "ImportStatement") {
+        if (encounteredNonImport) {
+          throw this.error(
+            statement.keyword,
+            "Imports must form a leading top-level block.",
+          );
+        }
+      } else {
+        encounteredNonImport = true;
+      }
+
+      statements.push(statement);
       this.consumeStatementEnd();
       this.skipNewlines();
     }
@@ -34,6 +54,10 @@ export class Parser extends ExpressionParser {
   }
 
   protected statement(): Statement {
+    if (this.match(TokenType.Import)) {
+      return this.importStatement(this.previous());
+    }
+
     if (this.match(TokenType.Enum)) {
       return {
         type: "ExpressionStatement",
@@ -60,6 +84,55 @@ export class Parser extends ExpressionParser {
 
   protected expressionStatement(): ExpressionStatement {
     return { type: "ExpressionStatement", expression: this.expression() };
+  }
+
+  private importStatement(keyword: Token): ImportStatement {
+    const pathToken = this.consume(
+      TokenType.String,
+      "Expected a single-quoted source path after 'import'.",
+    );
+
+    if (
+      !pathToken.lexeme.startsWith("'") ||
+      pathToken.lexeme.startsWith("'''")
+    ) {
+      throw this.error(
+        pathToken,
+        "Import paths must use a single-line, single-quoted string literal.",
+      );
+    }
+
+    const segments = pathToken.stringSegments ?? [];
+
+    if (segments.some((segment) => segment.type !== "Text")) {
+      throw this.error(pathToken, "Import paths cannot use interpolation.");
+    }
+
+    const sourcePath = segments
+      .map((segment) => (segment.type === "Text" ? segment.value : ""))
+      .join("");
+
+    if (!sourcePath.endsWith(".vci")) {
+      throw this.error(
+        pathToken,
+        "Import paths must include the '.vci' extension.",
+      );
+    }
+
+    if (/^(?:\/|[A-Za-z]:\/)/u.test(sourcePath)) {
+      throw this.error(pathToken, "Import paths must be relative.");
+    }
+
+    if (sourcePath.includes("\\")) {
+      throw this.error(pathToken, "Import path segments must use '/'.");
+    }
+
+    return {
+      type: "ImportStatement",
+      keyword,
+      pathToken,
+      path: sourcePath,
+    };
   }
 
   private discoverStructNames(tokens: Token[]): void {

@@ -1,7 +1,9 @@
-// Phase 14
+// Phase 15
 // Expected output: Phase13Counter(value: 15, step: 2)
 //                  Phase14Status.Running
-//                  SMOKE OK: 1338
+//                  SMOKE OK: 1353
+
+import 'phase15/imported.vci'
 
 enum Status { Pending }
 $answer = 42
@@ -296,6 +298,12 @@ enum Phase14Status {
 }
 $phase14_score = if ($phase14_forward == Phase14Status.Pending and "{{$phase14_forward}}" == "Pending") { 14 } else { 0 }
 print(value: Phase14Status.Running)
+$phase15_score = if (
+    null != 15
+    and (1, (2, true)) == (1, (2, true))
+    and $phase15_imported_value is int
+    and Phase13Counter(value: 1) is Phase13Counter
+) { 15 } else { 0 }
 $result = $checksum
     + $existing_boolean_score
     + $existing_null_score
@@ -313,6 +321,7 @@ $result = $checksum
     + $phase12_score
     + $phase13_score
     + $phase14_score
+    + $phase15_score
 print(value: "SMOKE OK: {{$result}}")
 $unused_null = return_null()
 

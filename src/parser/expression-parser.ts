@@ -1,10 +1,11 @@
-// Phase 13
+// Phase 15
 
 import {
   AssignmentExpression,
   BinaryExpression,
   ComparisonChainExpression,
   Expression,
+  TypeInspectionExpression,
   UnaryExpression,
 } from "../ast.js";
 import { Token, TokenType } from "../token.js";
@@ -135,6 +136,7 @@ export abstract class ExpressionParser extends PrimaryExpressionParser {
 
     while (true) {
       this.skipNewlinesBefore(
+        TokenType.Is,
         TokenType.EqualEqual,
         TokenType.BangEqual,
         TokenType.Less,
@@ -142,6 +144,55 @@ export abstract class ExpressionParser extends PrimaryExpressionParser {
         TokenType.Greater,
         TokenType.GreaterEqual,
       );
+
+      if (this.match(TokenType.Is)) {
+        const operator = this.previous();
+
+        if (operators.length > 0) {
+          throw this.error(
+            operator,
+            "'is' cannot be combined with another comparison operator without parentheses.",
+          );
+        }
+
+        this.skipNewlines();
+
+        if (this.check(TokenType.Pipe)) {
+          throw this.error(this.peek(), "A union type cannot start with '|'.");
+        }
+
+        const firstType = this.consumeTypeName("Expected a type after 'is'.");
+        const inspectedType = this.finishTypeAnnotation(firstType);
+
+        this.skipNewlinesBefore(
+          TokenType.Is,
+          TokenType.EqualEqual,
+          TokenType.BangEqual,
+          TokenType.Less,
+          TokenType.LessEqual,
+          TokenType.Greater,
+          TokenType.GreaterEqual,
+        );
+
+        if (
+          this.check(TokenType.Is) ||
+          this.isComparisonOperator(this.peek().type)
+        ) {
+          throw this.error(
+            this.peek(),
+            "'is' cannot be combined with another comparison operator without parentheses.",
+          );
+        }
+
+        const node: TypeInspectionExpression = {
+          type: "TypeInspectionExpression",
+          value: operands[0]!,
+          operator,
+          inspectedType,
+        };
+
+        return node;
+      }
 
       if (!this.isComparisonOperator(this.peek().type)) {
         break;

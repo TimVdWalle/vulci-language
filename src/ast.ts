@@ -1,4 +1,4 @@
-// Phase 14
+// Phase 15
 
 import { Token } from "./token.js";
 
@@ -7,11 +7,18 @@ export interface Program {
   statements: Statement[];
 }
 
-export type Statement = ExpressionStatement;
+export type Statement = ExpressionStatement | ImportStatement;
 
 export interface ExpressionStatement {
   type: "ExpressionStatement";
   expression: Expression;
+}
+
+export interface ImportStatement {
+  type: "ImportStatement";
+  keyword: Token;
+  pathToken: Token;
+  path: string;
 }
 
 export type Expression =
@@ -34,6 +41,7 @@ export type Expression =
   | ReturnExpression
   | UnaryExpression
   | BinaryExpression
+  | TypeInspectionExpression
   | ComparisonChainExpression
   | ConditionalExpression;
 
@@ -218,6 +226,13 @@ export interface BinaryExpression {
   left: Expression;
   operator: Token;
   right: Expression;
+}
+
+export interface TypeInspectionExpression {
+  type: "TypeInspectionExpression";
+  value: Expression;
+  operator: Token;
+  inspectedType: TypeAnnotation;
 }
 
 export interface ComparisonChainExpression {

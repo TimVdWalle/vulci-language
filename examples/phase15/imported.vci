@@ -1,0 +1,7 @@
+// Phase 15
+
+fn phase15_value() returns int {
+    15
+}
+
+$phase15_imported_value = phase15_value()

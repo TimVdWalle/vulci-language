@@ -1,4 +1,4 @@
-// Phase 14
+// Phase 15
 
 import {
   FunctionCall,
@@ -8,6 +8,7 @@ import {
 } from "../ast.js";
 import { RuntimeValue } from "../runtime-value.js";
 import { Token } from "../token.js";
+import { BUILT_IN_TYPE_NAMES } from "../type-names.js";
 import { EvaluatorContext } from "./evaluator-context.js";
 
 export abstract class TypeChecker extends EvaluatorContext {
@@ -50,9 +51,34 @@ export abstract class TypeChecker extends EvaluatorContext {
     value: RuntimeValue,
     annotation: TypeAnnotation,
   ): boolean {
+    this.assertKnownTypeAnnotation(annotation);
+
     return annotation.members.some((member) =>
       this.valueMatchesMember(value, member),
     );
+  }
+
+  protected assertKnownTypeAnnotation(annotation: TypeAnnotation): void {
+    for (const member of annotation.members) {
+      if (member.type === "TupleType") {
+        for (const nested of member.members) {
+          this.assertKnownTypeAnnotation(nested);
+        }
+
+        continue;
+      }
+
+      if (
+        !BUILT_IN_TYPE_NAMES.has(member.lexeme) &&
+        !this.structs.has(member.lexeme) &&
+        !this.enums.has(member.lexeme)
+      ) {
+        throw new Error(
+          `Unknown type name '${member.lexeme}'. at ` +
+            `${member.token.line}:${member.token.column}`,
+        );
+      }
+    }
   }
 
   private valueMatchesMember(value: RuntimeValue, member: TypeMember): boolean {
