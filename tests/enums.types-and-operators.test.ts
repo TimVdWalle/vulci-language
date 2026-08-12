@@ -1,4 +1,4 @@
-// Phase 14
+// Phase 15
 
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -161,14 +161,13 @@ test("rejects logical use and direct enum conditions", () => {
   );
 });
 
-test("does not allow equality between an enum and a non-enum value", () => {
-  assert.throws(
-    () =>
-      evaluate(`enum Status {
+test("compares an enum and a non-enum value as unequal", () => {
+  assert.deepEqual(
+    evaluate(`enum Status {
   Pending
 }
 Status.Pending == 1`),
-    /requires operands of the same type/,
+    { type: "Boolean", value: false },
   );
 });
 

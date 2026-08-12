@@ -1,4 +1,4 @@
-// Phase 14
+// Phase 15
 
 import { Expression, Program } from "../ast.js";
 import { Token } from "../token.js";
@@ -13,6 +13,8 @@ export function findEnumBindingConflict(
   enumNames: ReadonlySet<string>,
 ): EnumBindingConflict | null {
   for (const statement of program.statements) {
+    if (statement.type === "ImportStatement") continue;
+
     const conflict = findExpressionConflict(statement.expression, enumNames);
 
     if (conflict !== null) return conflict;
@@ -83,6 +85,9 @@ function findExpressionConflict(
         findExpressionConflict(expression.left, enumNames) ??
         findExpressionConflict(expression.right, enumNames)
       );
+
+    case "TypeInspectionExpression":
+      return findExpressionConflict(expression.value, enumNames);
 
     case "ComparisonChainExpression":
       return findExpressionListConflict(expression.operands, enumNames);

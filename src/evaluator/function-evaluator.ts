@@ -1,4 +1,4 @@
-// Phase 14
+// Phase 15
 
 import {
   EnumDeclaration,
@@ -12,24 +12,24 @@ import { RuntimeValue } from "../runtime-value.js";
 import { BUILT_IN_TYPE_NAMES } from "../type-names.js";
 import { CallExecutor } from "./call-executor.js";
 import { findEnumBindingConflict } from "./enum-validation.js";
-import {
-  findStructBindingConflict,
-  validateStructRecursion,
-} from "./struct-validation.js";
+import { findStructBindingConflict } from "./struct-validation.js";
 
 export abstract class FunctionEvaluator extends CallExecutor {
   protected registerDeclarations(program: Program): void {
     const structDeclarations = program.statements.flatMap((statement) =>
+      statement.type === "ExpressionStatement" &&
       statement.expression.type === "StructDeclaration"
         ? [statement.expression]
         : [],
     );
     const functionDeclarations = program.statements.flatMap((statement) =>
+      statement.type === "ExpressionStatement" &&
       statement.expression.type === "FunctionDeclaration"
         ? [statement.expression]
         : [],
     );
     const enumDeclarations = program.statements.flatMap((statement) =>
+      statement.type === "ExpressionStatement" &&
       statement.expression.type === "EnumDeclaration"
         ? [statement.expression]
         : [],
@@ -40,7 +40,11 @@ export abstract class FunctionEvaluator extends CallExecutor {
     this.registerEnums(enumDeclarations);
     this.validateStructBindings(program, structDeclarations);
     this.validateEnumBindings(program, enumDeclarations);
-    validateStructRecursion(this.structs);
+  }
+
+  protected validateProgramBindings(program: Program): void {
+    this.validateStructBindings(program, []);
+    this.validateEnumBindings(program, []);
   }
 
   protected evaluateFunctionCall(expression: FunctionCall): RuntimeValue {
@@ -49,6 +53,29 @@ export abstract class FunctionEvaluator extends CallExecutor {
         `Enum '${expression.callee}' is not callable. at ` +
           `${expression.calleeToken.line}:${expression.calleeToken.column}`,
       );
+    }
+
+    if (this.structs.has(expression.callee)) {
+      const positionalArgument = expression.argumentNames.findIndex(
+        (argumentName) => argumentName === null,
+      );
+
+      if (positionalArgument !== -1) {
+        throw new Error(
+          `Struct construction requires named fields. at ` +
+            `${expression.calleeToken.line}:` +
+            `${expression.calleeToken.column}`,
+        );
+      }
+
+      return this.evaluateStructConstruction({
+        type: "StructConstruction",
+        constructor: expression.calleeToken,
+        fields: expression.arguments.map((value, index) => ({
+          name: expression.argumentNames[index]!,
+          value,
+        })),
+      });
     }
 
     const localValue = this.findValue(
@@ -152,6 +179,8 @@ export abstract class FunctionEvaluator extends CallExecutor {
       if (
         BUILT_IN_TYPE_NAMES.has(name) ||
         this.structs.has(name) ||
+        this.functions.has(name) ||
+        this.enums.has(name) ||
         this.findValue(this.environment, name) !== undefined
       ) {
         throw this.structDuplicateError(declaration, name);
@@ -191,6 +220,13 @@ export abstract class FunctionEvaluator extends CallExecutor {
         throw this.structDuplicateError(struct, name);
       }
 
+      if (this.enums.has(name)) {
+        throw new Error(
+          `Name '${name}' is already defined as an enum. at ` +
+            `${declaration.name.line}:${declaration.name.column}`,
+        );
+      }
+
       if (this.functions.has(name)) {
         throw new Error(
           `Function '${name}' is already defined. at ` +
@@ -222,11 +258,14 @@ export abstract class FunctionEvaluator extends CallExecutor {
       conflict.token ??
       declarations.find(
         (declaration) => declaration.name.lexeme === conflict.name,
-      )!.name;
+      )?.name;
+
+    const locationText =
+      location === undefined ? "" : ` at ${location.line}:${location.column}`;
 
     throw new Error(
       `E_STRUCT_DUP: Struct name '${conflict.name}' cannot be rebound as a ` +
-        `variable or parameter. at ${location.line}:${location.column}`,
+        `variable or parameter.${locationText}`,
     );
   }
 
@@ -243,11 +282,14 @@ export abstract class FunctionEvaluator extends CallExecutor {
       conflict.token ??
       declarations.find(
         (declaration) => declaration.name.lexeme === conflict.name,
-      )!.name;
+      )?.name;
+
+    const locationText =
+      location === undefined ? "" : ` at ${location.line}:${location.column}`;
 
     throw new Error(
       `E_ENUM_DUP: Enum name '${conflict.name}' cannot be rebound as a ` +
-        `variable or parameter. at ${location.line}:${location.column}`,
+        `variable or parameter.${locationText}`,
     );
   }
 

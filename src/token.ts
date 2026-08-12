@@ -1,4 +1,4 @@
-// Phase 14
+// Phase 15
 
 export enum TokenType {
   Integer,
@@ -17,6 +17,8 @@ export enum TokenType {
   And,
   Or,
   Not,
+  Is,
+  Import,
   Assign,
   EqualEqual,
   BangEqual,

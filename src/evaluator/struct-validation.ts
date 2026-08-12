@@ -1,4 +1,4 @@
-// Phase 14
+// Phase 15
 
 import {
   Expression,
@@ -23,6 +23,8 @@ export function findStructBindingConflict(
   structNames: ReadonlySet<string>,
 ): StructBindingConflict | null {
   for (const statement of program.statements) {
+    if (statement.type === "ImportStatement") continue;
+
     const conflict = findExpressionConflict(statement.expression, structNames);
 
     if (conflict !== null) return conflict;
@@ -162,6 +164,9 @@ function findExpressionConflict(
         findExpressionConflict(expression.left, structNames) ??
         findExpressionConflict(expression.right, structNames)
       );
+
+    case "TypeInspectionExpression":
+      return findExpressionConflict(expression.value, structNames);
 
     case "ComparisonChainExpression":
       return findExpressionListConflict(expression.operands, structNames);

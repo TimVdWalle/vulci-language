@@ -1,4 +1,4 @@
-// Phase 14
+// Phase 15
 
 import { scanStringLiteral } from "../string-lexer.js";
 import { Token, TokenType } from "../token.js";
@@ -217,6 +217,10 @@ export abstract class LexerState {
         return TokenType.Or;
       case "not":
         return TokenType.Not;
+      case "is":
+        return TokenType.Is;
+      case "import":
+        return TokenType.Import;
       default:
         return TokenType.Identifier;
     }

@@ -1,9 +1,9 @@
-// Phase 14
+// Phase 15
 
 import {
   ConditionalExpression,
   Expression,
-  Statement,
+  ExpressionStatement,
   VariableReference,
 } from "../ast.js";
 import {
@@ -18,11 +18,8 @@ import { FunctionEvaluator } from "./function-evaluator.js";
 import { ReturnSignal } from "./return-signal.js";
 
 export abstract class ExpressionEvaluator extends FunctionEvaluator {
-  protected evaluateStatement(statement: Statement): RuntimeValue {
-    switch (statement.type) {
-      case "ExpressionStatement":
-        return this.evaluateExpression(statement.expression);
-    }
+  protected evaluateStatement(statement: ExpressionStatement): RuntimeValue {
+    return this.evaluateExpression(statement.expression);
   }
 
   protected evaluateExpression(expression: Expression): RuntimeValue {
@@ -166,6 +163,14 @@ export abstract class ExpressionEvaluator extends FunctionEvaluator {
           expression.operator,
           this.evaluateExpression(expression.left),
           this.evaluateExpression(expression.right),
+        );
+
+      case "TypeInspectionExpression":
+        return this.createBoolean(
+          this.valueMatchesType(
+            this.evaluateExpression(expression.value),
+            expression.inspectedType,
+          ),
         );
 
       case "ComparisonChainExpression":

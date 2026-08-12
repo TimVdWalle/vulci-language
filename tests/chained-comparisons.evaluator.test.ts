@@ -1,4 +1,4 @@
-// Phase 6
+// Phase 15
 
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -147,18 +147,18 @@ test("reports a later invalid ordering operator position", () => {
   );
 });
 
-test("rejects different operand types in an equality chain", () => {
-  assert.throws(
-    () => evaluate("1 == true == 1"),
-    /Invalid operand type in chained comparison: operator '==' requires operands of the same type\. at 1:3/,
-  );
+test("short-circuits a cross-type false result in an equality chain", () => {
+  assert.deepEqual(evaluate("1 == true == 1"), {
+    type: "Boolean",
+    value: false,
+  });
 });
 
-test("reports a later invalid equality operator position", () => {
-  assert.throws(
-    () => evaluate("1 == 1 != false"),
-    /Invalid operand type in chained comparison: operator '!=' requires operands of the same type\. at 1:8/,
-  );
+test("supports a later cross-type comparison in an equality chain", () => {
+  assert.deepEqual(evaluate("1 == 1 != false"), {
+    type: "Boolean",
+    value: true,
+  });
 });
 
 test("parentheses create a separate comparison result", () => {

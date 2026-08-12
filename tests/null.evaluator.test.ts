@@ -1,4 +1,4 @@
-// Phase 6
+// Phase 15
 
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -47,18 +47,18 @@ test("evaluates null inequality as false", () => {
   });
 });
 
-test("rejects equality between null and an Integer", () => {
-  assert.throws(
-    () => evaluate("null == 1"),
-    /Operator '==' requires operands of the same type\. at 1:6/,
-  );
+test("compares null and an Integer as unequal", () => {
+  assert.deepEqual(evaluate("null == 1"), {
+    type: "Boolean",
+    value: false,
+  });
 });
 
-test("rejects inequality between null and a Boolean", () => {
-  assert.throws(
-    () => evaluate("null != false"),
-    /Operator '!=' requires operands of the same type\. at 1:6/,
-  );
+test("compares null and a Boolean as unequal", () => {
+  assert.deepEqual(evaluate("null != false"), {
+    type: "Boolean",
+    value: true,
+  });
 });
 
 test("rejects ordering comparisons with null", () => {

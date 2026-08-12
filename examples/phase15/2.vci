@@ -1,0 +1,23 @@
+// Phase 15
+// Expected output:
+// true
+// true
+// true
+// value is integer or boolean: true
+
+struct Point {
+    int x
+    int y
+}
+
+enum Status {
+    Ready
+}
+
+$point = Point(x: 3, y: 4)
+$coordinates = ($point.x, $point.y)
+
+print(value: $point is Point)
+print(value: Status.Ready is Status)
+print(value: $coordinates is tuple(int, int))
+print(value: "value is integer or boolean: {{true is int|bool}}")

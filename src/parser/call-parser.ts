@@ -1,4 +1,4 @@
-// Phase 14
+// Phase 15
 
 import { Expression, FunctionCall, MemberAccess, MemberCall } from "../ast.js";
 import { Token, TokenType } from "../token.js";
@@ -56,6 +56,8 @@ export abstract class CallParser extends ObjectParser {
           this.containsAssignment(expression.left) ||
           this.containsAssignment(expression.right)
         );
+      case "TypeInspectionExpression":
+        return this.containsAssignment(expression.value);
       case "ComparisonChainExpression":
         return expression.operands.some((operand) =>
           this.containsAssignment(operand),
