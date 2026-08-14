@@ -1,6 +1,6 @@
 {
   "name": "vulci",
-  "version": "0.1.0",
+  "version": "0.15.0",
   "private": true,
   "description": "The reference interpreter for the Vulci programming language.",
   "type": "module",
@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "tsx src/cli.ts",
     "build": "tsc",
+    "build:executable": "node scripts/build-macos-executable.mjs",
     "start": "node dist/cli.js",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -18,12 +19,16 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/**/*.test.ts",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run smoke",
-    "coverage": "node --experimental-test-coverage --import tsx --test tests/**/*.test.ts",
-    "smoke": "tsx src/cli.ts examples/smoke.vci"
+    "coverage": "c8 --reporter=text tsx --test tests/**/*.test.ts",
+    "smoke": "tsx src/cli.ts examples/smoke.vci",
+    "smoke:executable": "node scripts/smoke-macos-executable.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
+    "c8": "^12.0.0",
+    "esbuild": "^0.28.1",
     "eslint": "^9.32.0",
+    "postject": "^1.0.0-alpha.6",
     "prettier": "^3.6.2",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2",

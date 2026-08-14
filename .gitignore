@@ -1,8 +1,12 @@
+# Phase: Phase 15B CLI, distribution, and quality hardening
+
 # Dependencies
 node_modules/
 
 # Build output
 dist/
+.build/
+artifacts/
 
 # Logs
 npm-debug.log*

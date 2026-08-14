@@ -1,3 +1,5 @@
+<!-- Phase: Phase 15B CLI, distribution, and quality hardening -->
+
 Vulci
 
 A general-purpose programming language designed from first principles.
@@ -106,8 +108,39 @@ Available development commands:
 ```bash
 npm run dev         # Run the interpreter from source.
 npm run build       # Compile the interpreter.
+npm run build:executable # Build a standalone executable on macOS.
 npm test            # Run the automated test suite.
 npm run coverage    # Run the test suite with coverage reporting.
 npm run smoke       # Run the end-to-end smoke test.
 npm run check       # Run formatting, linting, type checking, tests, and the smoke test.
 ```
+
+Building a standalone executable locally requires macOS and Node.js 22. The
+build produces an executable for the Mac's current architecture in `artifacts/`.
+
+CLI usage:
+
+```bash
+vulci --help
+vulci --version
+vulci .
+vulci program.vci --tokens --ast
+```
+
+Phase 15B releases provide standalone executables for Apple Silicon and Intel
+macOS. Once the Homebrew tap contains its generated formula, install Vulci with:
+
+```bash
+brew install TimVdWalle/vulci/vulci
+```
+
+Maintainers publish a release by pushing a tag matching the package version,
+such as `v0.15.0`. The release workflow builds and tests both macOS executables,
+publishes their checksums, and updates `TimVdWalle/homebrew-vulci`. The repository
+secret `HOMEBREW_TAP_TOKEN` must contain a fine-grained token with contents write
+access to that tap repository.
+
+Before the first release, create the public `TimVdWalle/homebrew-vulci`
+repository with an initial `main` branch, then add `HOMEBREW_TAP_TOKEN` to this
+repository's Actions secrets. The first version tag will generate and commit the
+tap formula automatically.

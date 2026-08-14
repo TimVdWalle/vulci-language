@@ -1,4 +1,4 @@
-// Phase 10
+// Phase 15B
 
 import { locatedError } from "./diagnostics/source-error.js";
 import { ScannedStringSegment } from "./token.js";
@@ -262,7 +262,7 @@ function normalizeMultilineSegments(
   const lines = combined.split("\n");
   const prefixes = lines
     .filter((line) => line.trim().length > 0)
-    .map((line) => line.match(/^[ \t]*/)?.[0] ?? "");
+    .map((line) => /^[ \t]*/.exec(line)![0]);
   const commonPrefix = prefixes.reduce(
     commonWhitespacePrefix,
     prefixes[0] ?? "",
@@ -284,11 +284,9 @@ function normalizeMultilineSegments(
       result.push({ type: "Text", value: combined.slice(cursor, index) });
     }
 
-    const segment = interpolationSegments[Number(match[1])];
+    const segment = interpolationSegments[Number(match[1])]!;
 
-    if (segment !== undefined) {
-      result.push(segment);
-    }
+    result.push(segment);
 
     cursor = index + match[0].length;
   }
