@@ -33,12 +33,10 @@ class Vulci < Formula
 
   depends_on :macos
 
-  on_arm do
+  if Hardware::CPU.arm?
     url "${releaseBase}/vulci-${version}-macos-arm64"
     sha256 "${armChecksum}"
-  end
-
-  on_intel do
+  else
     url "${releaseBase}/vulci-${version}-macos-x64"
     sha256 "${x64Checksum}"
   end
