@@ -1,9 +1,9 @@
-<!-- Phase: Phase 15 pre-collections language improvements -->
+<!-- Phase: Phase 15B CLI, distribution, and quality hardening -->
 <!-- Document ID: implementation-strategy -->
-<!-- Version: 5 -->
+<!-- Version: 6 -->
 <!-- Status: Active -->
 <!-- Authority: Reference-interpreter architecture, mechanics, and temporary constraints -->
-<!-- Supersedes: implementation-strategy v4 -->
+<!-- Supersedes: implementation-strategy v5 -->
 
 # Implementation Strategy
 
@@ -133,8 +133,70 @@ directory or a source-file entry path:
 file as the entry file. The CLI does not scan the directory for additional Vulci
 source files; further files are reached through imports.
 
-Production releases should be distributed as a standalone executable so
-users are not be required to install Node.js.
+### `impl-cli-001` — Phase 15B command-line interface
+
+The command-line interface supports:
+
+    vulci --help
+    vulci -h
+    vulci --version
+    vulci -v
+    vulci . [--tokens] [--ast] [--no-color]
+    vulci <source-file> [--tokens] [--ast] [--no-color]
+
+Help and version requests do not require an entry path, write their result to
+standard output, exit successfully, and do not run a Vulci program. The Phase
+15B version is `0.15.0`.
+
+Unknown options, multiple entry paths, and other invalid command-line input are
+errors. Their diagnostics are concise and direct users to `vulci --help`.
+
+Token debug output includes the token type, lexeme, line, and column. It does not
+label the numeric token-type representation as a literal. Token and AST debug
+output use consistent headings and formatting.
+
+Help and debug output use consistent colour only when their output stream is an
+interactive terminal that supports it. `--no-color` and a non-empty `NO_COLOR`
+environment variable disable colour. Plain output remains stable for redirection,
+tests, and other tools.
+
+### `impl-dist-001` — Standalone macOS executables
+
+Production releases are distributed as standalone `vulci` executables so users
+are not required to install Node.js. Phase 15B supports both macOS ARM64 and
+macOS Intel.
+
+The executable build first bundles the compiled reference interpreter into a
+single JavaScript entry and then packages it using Node.js Single Executable
+Applications. Phase 15B executable builds use Node.js 22. The build tooling must
+be reproducible locally and in release automation. Each built executable must
+pass command-line smoke tests, including version reporting and execution of a
+Vulci source file.
+
+### `impl-release-001` — Automated releases and Homebrew tap
+
+A version-tagged Vulci release automatically builds and tests both supported
+macOS executables, generates a SHA-256 checksum for each, and publishes the
+executables and checksums as assets of the matching Vulci GitHub Release.
+
+The dedicated `TimVdWalle/homebrew-vulci` repository owns the Homebrew formula.
+The formula selects the released executable matching the user's macOS
+architecture, verifies its SHA-256 checksum, installs it as `vulci`, and tests
+its version output.
+
+After all release assets have been published successfully, release automation
+updates the tap formula to the same version and checksums. Executable artifacts
+remain in the Vulci GitHub Release and are not committed to the tap repository.
+
+Before the first release, the public tap repository must be initialized with a
+`main` branch. The Vulci repository must provide a `HOMEBREW_TAP_TOKEN` Actions
+secret with contents-write access to that tap.
+
+### `impl-quality-001` — Coverage measurement
+
+The coverage command uses `c8` to merge V8 coverage from the TypeScript test
+workers consistently. Phase 15B coverage tests target the file-level baseline
+metrics recorded by `cov15b-001`.
 
 The command-line interface is considered part of the language experience
 and should remain stable regardless of implementation changes.

@@ -1,0 +1,79 @@
+---
+name: vulci-design
+description: Audit and guide Vulci language design, comparisons, source-of-truth changes, and implementation decisions. Use for proposals about syntax, semantics, language features, philosophy alignment, comparisons with other languages, changes to files under project/, or implementation work that changes language behavior.
+---
+
+<!-- Phase: Phase 15 pre-collections language improvements -->
+
+# Vulci Design
+
+Protect the distinction between accepted Vulci decisions, undecided proposals, explanatory documentation, and implementation details.
+
+## 1. Resolve authority
+
+- Read `project/source_of_truth_index.md` completely before substantive analysis.
+- Identify every active authoritative document relevant to the topic, including each document listed under `Also check`.
+- Read all relevant general and domain-specific syntax and semantics documents. A rule may be distributed across more than one file.
+- For implementation work, also read `project/implementation/implementation_phases.md` and `project/implementation/implementation_strategy.md` where relevant.
+- Treat `project/documentation/language_documentation.md`, examples, tests, and implementation code as non-authoritative unless the index explicitly says otherwise.
+
+## 2. Audit the proposal
+
+- Split the proposal into atomic statements with short, stable IDs.
+- Classify every statement as exactly one of:
+  - `Agreed` — already recorded in its active authoritative source-of-truth document or explicitly approved by the user.
+  - `Undecided` — not established by an active authority and not explicitly approved by the user.
+- Cite the owning document or the user's explicit approval for each `Agreed` statement.
+- Do not infer acceptance from examples, conventions, other languages, implementation code, tests, or apparent intent.
+- Report contradictions between authorities separately; do not resolve them by guessing.
+
+Use this compact audit shape:
+
+| ID  | Statement | Status | Authority or reason |
+| --- | --------- | ------ | ------------------- |
+
+## 3. Evaluate the design
+
+- Require every addition—including an idea, syntax rule, language feature, semantic rule, or anything else—to support one or more philosophies in `project/philosophies.md`, and evaluate it against `project/project_vision.md`.
+- State which philosophy IDs the proposal supports and how.
+- Challenge proposals when they may duplicate existing languages, fail to improve the language, add little practical value, contradict accepted decisions, or create avoidable design debt.
+- Keep challenges proportionate. Explain the reasoning and offer relevant alternatives.
+
+## 4. Choose the task path
+
+### Design discussion
+
+- Present the audit, philosophy analysis, weaknesses, and alternatives.
+- Do not edit files unless the user requested edits and the source-of-truth gate below is satisfied.
+
+### Source-of-truth creation or update
+
+- Before creating or updating a source-of-truth document, produce an audit of every statement that would appear in the resulting document, including unchanged statements in an existing document, and classify each one as `Agreed` or `Undecided`.
+- Wait for explicit user approval of the audit.
+- After approval, update only the authoritative owner identified by the index and any other files the user explicitly requested.
+- Preserve all unrelated text and accepted decisions verbatim.
+- Never promote an `Undecided` statement into accepted language text.
+
+### Language implementation
+
+- Confirm every implemented behavior is `Agreed` in its authoritative source.
+- Implement the smallest change required by the accepted behavior.
+- If implementation, tests, examples, and authority disagree, stop and report the conflict rather than silently choosing one.
+- Do not refactor unrelated code.
+
+### Language comparison
+
+- Unless the user specifies another comparison set, cover:
+  - `cmp-ruby` — Ruby
+  - `cmp-php` — PHP
+  - `cmp-laravel` — Laravel
+  - `cmp-java` — Java
+  - `cmp-js` — JavaScript
+  - `cmp-python` — Python
+- Distinguish language comparisons from framework comparisons when that difference affects the conclusion.
+
+## 5. Finish clearly
+
+- State whether files were changed.
+- If waiting for audit approval, say explicitly that no source-of-truth file has been changed.
+- Give every option, issue, decision, and deliverable a short, stable ID.

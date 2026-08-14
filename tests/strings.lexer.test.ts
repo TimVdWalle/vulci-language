@@ -1,8 +1,9 @@
-// Phase 10
+// Phase 15B
 
 import assert from "node:assert/strict";
 import test from "node:test";
 import { Lexer } from "../src/lexer.js";
+import { scanStringLiteral } from "../src/string-lexer.js";
 import { TokenType } from "../src/token.js";
 
 test("lexes single-line string forms and string operators", () => {
@@ -61,6 +62,28 @@ test("strips multiline boundary newlines and common indentation", () => {
   ]);
 });
 
+test("normalizes empty, blank, and interpolated multiline strings", () => {
+  assert.deepEqual(scanStringLiteral('""""""', 0, 1, 1).segments, []);
+
+  const result = scanStringLiteral(
+    '"""\n  before {{ value }}\n  \n  after\n"""',
+    0,
+    1,
+    1,
+  );
+
+  assert.deepEqual(result.segments, [
+    { type: "Text", value: "before " },
+    {
+      type: "Interpolation",
+      source: " value ",
+      line: 2,
+      column: 12,
+    },
+    { type: "Text", value: "\n  \nafter" },
+  ]);
+});
+
 test("reports stable string syntax diagnostics", () => {
   assert.throws(() => new Lexer(String.raw`"bad\x"`).lex(), /E_STR_ESC:/);
   assert.throws(() => new Lexer('"bad\nline"').lex(), /E_STR_NL:/);
@@ -68,4 +91,5 @@ test("reports stable string syntax diagnostics", () => {
   assert.throws(() => new Lexer('"{{ }}"').lex(), /E_IPL_EMPTY:/);
   assert.throws(() => new Lexer('"text }}"').lex(), /E_IPL_CLOSE:/);
   assert.throws(() => new Lexer('"{{value"').lex(), /E_IPL_UNCLOSED:/);
+  assert.throws(() => scanStringLiteral('"\\', 0, 1, 1), /E_STR_ESC:/);
 });

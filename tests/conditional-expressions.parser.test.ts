@@ -1,4 +1,4 @@
-// Phase 9
+// Phase 15B
 
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -359,4 +359,24 @@ print(result)
 `);
 
   assert.equal(program.statements.length, 2);
+});
+
+test("accepts a return as the final conditional-branch expression", () => {
+  assert.doesNotThrow(() =>
+    parse(`if (true) {
+  return 1
+
+}`),
+  );
+});
+
+test("rejects an expression after a conditional-branch return", () => {
+  assert.throws(
+    () =>
+      parse(`if (true) {
+  return 1
+  2
+}`),
+    /Unreachable expression after unconditional return/,
+  );
 });

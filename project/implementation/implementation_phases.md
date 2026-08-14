@@ -1,9 +1,9 @@
-<!-- Phase: Phase 15 pre-collections language improvements -->
+<!-- Phase: Phase 15B CLI, distribution, and quality hardening -->
 <!-- Document ID: implementation-phases -->
-<!-- Version: 18 -->
+<!-- Version: 19 -->
 <!-- Status: Active -->
 <!-- Authority: Implementation order, phase scope, dependencies, and completion criteria -->
-<!-- Supersedes: implementation-phases v17 -->
+<!-- Supersedes: implementation-phases v18 -->
 
 # Implementation Phases
 
@@ -16,7 +16,8 @@ Each phase must:
 
 - Be small and coherent.
 - Leave the language in a working state.
-- Contain either core language work or standard library work.
+- Contain core language work, standard library work, or directly supporting
+  language tooling and distribution work.
 - Preserve the agreed ordering unless explicitly changed.
 
 A phase marked **Design-blocked** must not begin until its required syntax and
@@ -337,6 +338,46 @@ and editors can style important Vulci categories through their colour schemes.
 
 **Result:** Programs gain more useful equality and type inspection and can be
 organised across multiple source files before collection implementation begins.
+
+---
+
+## `ph15b` CLI, distribution, and quality hardening — Tooling
+
+- `cli15b-001` Add `--help` and `-h`, which show concise usage, entry-path, and
+  option documentation without requiring a source file and exit successfully
+- `cli15b-002` Add `--version` and `-v`, which report Vulci version `0.15.0`
+  without requiring a source file and exit successfully
+- `cli15b-003` Reject unknown options, multiple entry paths, and other invalid
+  command-line input with a concise error and help guidance
+- `cli15b-004` Add `--no-color`
+- `debug15b-001` Improve `--tokens` output by removing the incorrectly labelled
+  `literal` field, adding token columns, and using consistent headings
+- `debug15b-002` Give `--tokens` and `--ast` consistent, readable debug output
+- `color15b-001` Use colour consistently for help and debug output only when the
+  output terminal supports it; respect both `--no-color` and the `NO_COLOR`
+  environment variable
+- `dist15b-001` Produce standalone `vulci` executables for macOS ARM64 and Intel
+  that do not require a separate Node.js installation
+- `build15b-001` Add reproducible tooling that bundles the reference interpreter
+  and builds the macOS executables with Node.js Single Executable Applications
+- `release15b-001` On a version-tagged release, automatically build and test both
+  macOS executables, generate their SHA-256 checksums, and publish them as Vulci
+  GitHub Release assets
+- `brew15b-001` Provide a Vulci formula through the dedicated
+  `TimVdWalle/homebrew-vulci` tap; the formula installs the matching released
+  executable and verifies its SHA-256 checksum
+- `brew15b-002` After a successful Vulci release, automatically update the tap
+  formula for that release; executables remain owned by the Vulci GitHub Release
+  rather than being committed to the tap repository
+- `cov15b-001` Raise every file-level line, branch, or function coverage metric
+  measured at `85%` or below at the start of Phase 15B to at least `99%`, with
+  `100%` preferred, using meaningful tests
+- `compat15b-001` Preserve `--tokens`, `--ast`, `vulci .`, and direct source-file
+  execution
+
+**Result:** Vulci has a clear command-line interface, installable standalone
+macOS releases, automated Homebrew distribution, and stronger regression
+coverage before collection work begins.
 
 ---
 
