@@ -30,10 +30,20 @@
 - `code3` — Preserve the project's established naming and structure whenever possible.
 - `code4` — Suggest beneficial but unnecessary refactors separately instead of applying them.
 
+## Coverage
+
+- `cov1` — For every pull request, inspect the current coverage report. When source-code files relevant to that pull request's requested changes have a file-level coverage metric below `97%`, make a meaningful effort to improve the least-covered relevant file. Do not add unrelated coverage work; use meaningful tests and keep the effort proportionate to the pull request.
+
+## File size
+
+- `size1` — Aim to keep every source-code file at or below `300` lines. Documentation, instruction files, manifests, lockfiles, and similar non-source files are exempt.
+- `size2` — A source-code file modified by a pull request may remain above `300` lines when that pull request grows it by less than `10%`; avoid larger growth without splitting or reducing the file.
+- `size3` — When a source-code file modified by a pull request reaches `650` lines or more, make a meaningful effort in that pull request to split or reduce it toward `300` lines without unnecessary behaviour changes.
+
 ## Repository access
 
 - `repo1` — In a local IDE workflow, treat the current working tree as the primary codebase.
-- `repo2` — For remote-only repository, branch, or pull-request context, use the public repository at <https://github.com/TimVdWalle/vulci> instead of the ChatGPT GitHub plugin.
+- `repo2` — For remote-only repository, branch, or pull-request context, use the public repository at <https://github.com/TimVdWalle/vulci-language> instead of the ChatGPT GitHub plugin.
 - `repo3` — Do not assume `main` is current. Check the active local branch and, when relevant, feature branches or pull requests.
 
 ## Phase headers
