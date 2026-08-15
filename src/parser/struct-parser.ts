@@ -1,4 +1,4 @@
-// Phase 13
+// Phase 16
 
 import {
   FunctionDeclaration,
@@ -101,7 +101,7 @@ export abstract class StructParser extends FunctionParser {
     }
 
     const firstType = this.consumeTypeName("Expected struct field type.");
-    const fieldType = this.finishTypeAnnotation(firstType);
+    const fieldType = this.finishTypeAnnotation(firstType, false);
     const name = this.consume(
       TokenType.Identifier,
       "Expected field name after type declaration.",

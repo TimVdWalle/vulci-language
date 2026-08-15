@@ -1,4 +1,4 @@
-// Phase 15
+// Phase 16
 
 import { Expression, Program } from "../ast.js";
 import { Token } from "../token.js";
@@ -126,6 +126,16 @@ function findExpressionConflict(
     case "StructConstruction":
       return findExpressionListConflict(
         expression.fields.map((field) => field.value),
+        enumNames,
+      );
+
+    case "ListLiteral":
+    case "SetLiteral":
+      return findExpressionListConflict(expression.items, enumNames);
+
+    case "MapLiteral":
+      return findExpressionListConflict(
+        expression.entries.flatMap((entry) => [entry.key, entry.value]),
         enumNames,
       );
 

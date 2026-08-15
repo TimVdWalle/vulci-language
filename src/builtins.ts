@@ -1,4 +1,4 @@
-// Phase 14
+// Phase 16
 
 import { Environment } from "./environment.js";
 import { NULL_VALUE, RuntimeValue } from "./runtime-value.js";
@@ -15,7 +15,7 @@ export function registerBuiltins(environment: Environment): void {
     ],
 
     call(arguments_: RuntimeValue[]): RuntimeValue {
-      const output = arguments_.map(formatValue);
+      const output = arguments_.map((value) => formatValue(value));
 
       console.log(...output);
 
@@ -24,13 +24,15 @@ export function registerBuiltins(environment: Environment): void {
   });
 }
 
-function formatValue(value: RuntimeValue): string {
+function formatValue(value: RuntimeValue, quoteStrings = false): string {
   switch (value.type) {
     case "Integer":
       return value.value.toString();
 
     case "String":
-      return value.value;
+      return quoteStrings
+        ? `"${escapeEmbeddedString(value.value)}"`
+        : value.value;
 
     case "Boolean":
       return value.value ? "true" : "false";
@@ -39,16 +41,34 @@ function formatValue(value: RuntimeValue): string {
       return "null";
 
     case "Tuple":
-      return `(${value.members.map(formatValue).join(", ")})`;
+      return `(${value.members.map((item) => formatValue(item, quoteStrings)).join(", ")})`;
+
+    case "List":
+      return `list[${value.items.map((item) => formatValue(item, true)).join(", ")}]`;
+
+    case "Set":
+      return `set[${value.items.map((item) => formatValue(item, true)).join(", ")}]`;
+
+    case "Map":
+      return `map[${value.entries
+        .map(
+          (entry) =>
+            `${formatValue(entry.key, true)}: ${formatValue(entry.value, true)}`,
+        )
+        .join(", ")}]`;
 
     case "AnonymousObject":
       return `object(${value.fields
-        .map((field) => `${field.name}: ${formatValue(field.value)}`)
+        .map(
+          (field) => `${field.name}: ${formatValue(field.value, quoteStrings)}`,
+        )
         .join(", ")})`;
 
     case "Struct":
       return `${value.name}(${value.fields
-        .map((field) => `${field.name}: ${formatValue(field.value)}`)
+        .map(
+          (field) => `${field.name}: ${formatValue(field.value, quoteStrings)}`,
+        )
         .join(", ")})`;
 
     case "Enum":
@@ -57,4 +77,13 @@ function formatValue(value: RuntimeValue): string {
     case "NativeFunction":
       return "";
   }
+}
+
+function escapeEmbeddedString(value: string): string {
+  return value
+    .replaceAll("\\", "\\\\")
+    .replaceAll('"', '\\"')
+    .replaceAll("\n", "\\n")
+    .replaceAll("\t", "\\t")
+    .replaceAll("\r", "\\r");
 }

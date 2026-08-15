@@ -1,4 +1,4 @@
-// Phase 15
+// Phase 16
 
 import {
   EnumDeclaration,
@@ -9,6 +9,7 @@ import {
   StructDeclaration,
 } from "../ast.js";
 import { RuntimeValue } from "../runtime-value.js";
+import { isCollectionValue } from "../collection-runtime.js";
 import { BUILT_IN_TYPE_NAMES } from "../type-names.js";
 import { CallExecutor } from "./call-executor.js";
 import { findEnumBindingConflict } from "./enum-validation.js";
@@ -133,6 +134,10 @@ export abstract class FunctionEvaluator extends CallExecutor {
 
     if (receiver.type === "String") {
       return this.evaluateStringMemberCall(expression, receiver);
+    }
+
+    if (isCollectionValue(receiver)) {
+      return this.evaluateCollectionMemberCall(expression, receiver);
     }
 
     if (receiver.type === "Struct") {

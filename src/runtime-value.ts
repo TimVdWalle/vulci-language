@@ -1,10 +1,13 @@
-// Phase 14
+// Phase 16
 
 export type RuntimeValue =
   | IntegerValue
   | StringValue
   | BooleanValue
   | NullValue
+  | ListValue
+  | SetValue
+  | MapValue
   | TupleValue
   | AnonymousObjectValue
   | StructValue
@@ -28,6 +31,26 @@ export interface BooleanValue {
 
 export interface NullValue {
   type: "Null";
+}
+
+export interface ListValue {
+  type: "List";
+  items: RuntimeValue[];
+}
+
+export interface SetValue {
+  type: "Set";
+  items: RuntimeValue[];
+}
+
+export interface MapEntryValue {
+  key: RuntimeValue;
+  value: RuntimeValue;
+}
+
+export interface MapValue {
+  type: "Map";
+  entries: MapEntryValue[];
 }
 
 export interface TupleValue {

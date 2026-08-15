@@ -1,15 +1,15 @@
-// Phase 15
+// Phase 16
 
 import { Expression, FunctionCall, MemberAccess, MemberCall } from "../ast.js";
 import { Token, TokenType } from "../token.js";
-import { ObjectParser } from "./object-parser.js";
+import { CollectionLiteralParser } from "./collection-literal-parser.js";
 
 interface ParsedArguments {
   arguments: Expression[];
   argumentNames: (Token | null)[];
 }
 
-export abstract class CallParser extends ObjectParser {
+export abstract class CallParser extends CollectionLiteralParser {
   protected finishMember(receiver: Expression): MemberAccess | MemberCall {
     const member = this.consume(
       TokenType.Identifier,
@@ -94,6 +94,15 @@ export abstract class CallParser extends ObjectParser {
       case "StructConstruction":
         return expression.fields.some((field) =>
           this.containsAssignment(field.value),
+        );
+      case "ListLiteral":
+      case "SetLiteral":
+        return expression.items.some((item) => this.containsAssignment(item));
+      case "MapLiteral":
+        return expression.entries.some(
+          (entry) =>
+            this.containsAssignment(entry.key) ||
+            this.containsAssignment(entry.value),
         );
       case "TupleLiteral":
         return expression.members.some((member) =>

@@ -1,4 +1,4 @@
-// Phase 13
+// Phase 16
 
 export const BUILT_IN_TYPE_NAMES = new Set<string>([
   "int",
@@ -7,6 +7,7 @@ export const BUILT_IN_TYPE_NAMES = new Set<string>([
   "list",
   "set",
   "map",
+  "collection",
   "any",
   "null",
 ]);

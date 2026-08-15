@@ -1,4 +1,4 @@
-// Phase 15
+// Phase 16
 
 import {
   BooleanLiteral,
@@ -101,6 +101,15 @@ export abstract class PrimaryExpressionParser extends CallParser {
 
     if (this.match(TokenType.Identifier)) {
       const identifier = this.previous();
+
+      if (
+        (identifier.lexeme === "list" ||
+          identifier.lexeme === "set" ||
+          identifier.lexeme === "map") &&
+        this.match(TokenType.LeftBracket)
+      ) {
+        return this.finishCollectionLiteral(identifier);
+      }
 
       if (this.match(TokenType.LeftParen)) {
         if (identifier.lexeme === "object") {

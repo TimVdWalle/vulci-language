@@ -1,4 +1,4 @@
-// Phase 15
+// Phase 16
 
 import { RuntimeValue } from "../runtime-value.js";
 
@@ -21,6 +21,35 @@ export function runtimeValuesEqual(
       return right.type === "Boolean" && left.value === right.value;
     case "Null":
       return right.type === "Null";
+    case "List":
+      return (
+        right.type === "List" &&
+        left.items.length === right.items.length &&
+        left.items.every((item, index) =>
+          runtimeValuesEqual(item, right.items[index]!),
+        )
+      );
+    case "Set":
+      return (
+        right.type === "Set" &&
+        left.items.length === right.items.length &&
+        left.items.every((item) =>
+          right.items.some((candidate) => runtimeValuesEqual(item, candidate)),
+        )
+      );
+    case "Map":
+      return (
+        right.type === "Map" &&
+        left.entries.length === right.entries.length &&
+        left.entries.every((entry) => {
+          const other = right.entries.find((candidate) =>
+            runtimeValuesEqual(entry.key, candidate.key),
+          );
+          return (
+            other !== undefined && runtimeValuesEqual(entry.value, other.value)
+          );
+        })
+      );
     case "Struct":
       if (right.type !== "Struct") return false;
       if (left.name !== right.name) return false;

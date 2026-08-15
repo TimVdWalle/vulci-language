@@ -1,8 +1,12 @@
-// Phase 14
+// Phase 16
 
 import { RuntimeValue } from "../runtime-value.js";
 
 export function copyRuntimeValue(value: RuntimeValue): RuntimeValue {
+  if (value.type === "List" || value.type === "Set" || value.type === "Map") {
+    return value;
+  }
+
   if (value.type === "Tuple") {
     return {
       type: "Tuple",

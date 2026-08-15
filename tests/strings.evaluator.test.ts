@@ -1,9 +1,10 @@
-// Phase 10
+// Phase 16
 
 import assert from "node:assert/strict";
 import test from "node:test";
 import { Environment } from "../src/environment.js";
 import { Evaluator } from "../src/evaluator.js";
+import { graphemesOf } from "../src/graphemes.js";
 import { Lexer } from "../src/lexer.js";
 import { Parser } from "../src/parser.js";
 
@@ -66,6 +67,23 @@ test("counts extended grapheme clusters", () => {
     type: "Integer",
     value: 2,
   });
+});
+
+test("counts a decomposed grapheme as one grapheme", () => {
+  const decomposed = "a\u0301";
+
+  assert.deepEqual(evaluate(`"${decomposed}".count()`), {
+    type: "Integer",
+    value: 1,
+  });
+});
+
+test("segments and caches externally supplied string values", () => {
+  const value = { type: "String" as const, value: "a\u0301b" };
+  const graphemes = graphemesOf(value);
+
+  assert.deepEqual(graphemes, ["a\u0301", "b"]);
+  assert.equal(graphemesOf(value), graphemes);
 });
 
 test("reports member diagnostics", () => {

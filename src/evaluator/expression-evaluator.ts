@@ -1,4 +1,4 @@
-// Phase 15
+// Phase 16
 
 import {
   ConditionalExpression,
@@ -41,6 +41,11 @@ export abstract class ExpressionEvaluator extends FunctionEvaluator {
 
       case "NullLiteral":
         return NULL_VALUE;
+
+      case "ListLiteral":
+      case "SetLiteral":
+      case "MapLiteral":
+        return this.evaluateCollectionLiteral(expression);
 
       case "AnonymousObjectLiteral":
         return {
@@ -104,26 +109,8 @@ export abstract class ExpressionEvaluator extends FunctionEvaluator {
       case "MemberCall":
         return this.evaluateMemberCall(expression);
 
-      case "IndexExpression": {
-        const target = this.evaluateExpression(expression.target);
-        const index = this.evaluateExpression(expression.index);
-        const location = `${expression.bracket.line}:${expression.bracket.column}`;
-
-        if (target.type !== "Tuple") {
-          throw new Error(
-            `IDX_TARGET: Value does not support indexing. at ${location}`,
-          );
-        }
-        if (index.type !== "Integer") {
-          throw new Error(`IDX_TYPE: Index must be an integer. at ${location}`);
-        }
-        if (index.value < 0 || index.value >= target.members.length) {
-          throw new Error(
-            `IDX_RANGE: Index ${index.value} is outside the valid range. at ${location}`,
-          );
-        }
-        return target.members[index.value]!;
-      }
+      case "IndexExpression":
+        return this.evaluateIndexExpression(expression);
 
       case "ReturnExpression": {
         if (this.functionDepth === 0) {
