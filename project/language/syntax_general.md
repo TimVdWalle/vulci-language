@@ -1,9 +1,9 @@
-<!-- Phase: Phase 15 pre-collections language improvements -->
+<!-- Phase: Phase 16 collections -->
 <!-- Document ID: syntax-general -->
-<!-- Version: 28 -->
+<!-- Version: 29 -->
 <!-- Status: Active -->
 <!-- Authority: Accepted non-collection-specific Vulci syntax -->
-<!-- Supersedes: syntax-general v27 -->
+<!-- Supersedes: syntax-general v28 -->
 
 # General Syntax Specification
 
@@ -1049,6 +1049,7 @@ str
 list
 set
 map
+collection
 any
 null
 ```
@@ -1056,6 +1057,10 @@ null
 Declared struct and enum names are user-defined type names and may appear in
 every type position accepted by Vulci. A struct or enum declaration cannot reuse
 any built-in type name listed above.
+
+`collection` follows the same contextual identifier rules as `list`, `set`, and
+`map`; it is not a more strongly reserved keyword. Its accepted type positions
+and type-argument rules are defined in the Collection Syntax Specification.
 
 The syntax of built-in collection type arguments is defined in the separate
 Collection Syntax Specification. General user-defined generic syntax is not yet

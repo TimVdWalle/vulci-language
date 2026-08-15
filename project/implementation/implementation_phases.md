@@ -1,9 +1,9 @@
-<!-- Phase: Phase 15B CLI, distribution, and quality hardening -->
+<!-- Phase: Phase 16 collections -->
 <!-- Document ID: implementation-phases -->
-<!-- Version: 19 -->
+<!-- Version: 20 -->
 <!-- Status: Active -->
 <!-- Authority: Implementation order, phase scope, dependencies, and completion criteria -->
-<!-- Supersedes: implementation-phases v18 -->
+<!-- Supersedes: implementation-phases v19 -->
 
 # Implementation Phases
 
@@ -385,19 +385,30 @@ coverage before collection work begins.
 
 - `lf20` Unified collection model
 - Distinct `list`, `set`, and `map` values with shared operation names where appropriate
-- Broad `collection` boundary type with runtime concrete-type behaviour
+- Built-in non-generic `collection` boundary type with runtime concrete-type behaviour
+- Explicit unrestricted `list<any>`, `set<any>`, `map<any, any>`,
+  `map<any, V>`, and `map<K, any>` boundary forms without warnings
 - Extend the general `is Type` operator to the accepted concrete, typed, and broad
-  collection type forms
-- Collection literals, including trailing commas
-- Zero-based list access and keyed map access
+  collection type forms; do not add `.isList`, `.isSet`, or `.isMap` properties
+- Collection literals, including trailing commas and the accepted left-to-right,
+  exactly-once evaluation and map-key validation order
+- Zero-based list access, keyed map access, and zero-based Unicode-grapheme
+  string access with the shared indexing diagnostics
 - Sets use insertion order and have no positional access
 - Initial map-key eligibility rules
 - Structural equality for lists, sets, maps, and nested collections
 - Immutable `add()` operations for lists, sets, and maps, plus `remove()` for lists and sets
+- `map.add()` accepts only absent eligible keys, appends a successful new key,
+  and errors on an existing key rather than replacing its value
 - `contains()` semantics for strings, lists, sets, and maps
 - Runtime errors when an operation unsupported by a broad `collection` value is reached
-- Structural reuse of nested immutable values; no required deep copy
-- Transformation ordering guarantees
+- Structural immutability using each contained value's normal assignment
+  semantics; a new outer collection is produced without a required deep copy
+- Compact deterministic concrete collection printing, including recursive nested
+  values and quoted-and-escaped embedded strings
+- Transformation ordering guarantees for the literal, `add()`, and `remove()`
+  operations implemented in this phase; callback-based collection operations
+  retain their later assigned phases
 - Add an explicit Unicode regression test verifying that decomposed graphemes
   (for example `a` followed by U+0301 COMBINING ACUTE ACCENT) are counted as a
   single grapheme by `str.count()`, in accordance with the accepted Unicode

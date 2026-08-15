@@ -1,9 +1,9 @@
-<!-- Phase: Phase 15 pre-collections language improvements -->
+<!-- Phase: Phase 16 collections -->
 <!-- Document ID: semantics-collections -->
-<!-- Version: 11 -->
+<!-- Version: 12 -->
 <!-- Status: Active -->
 <!-- Authority: Accepted string and collection semantics -->
-<!-- Supersedes: semantics-collections v10 -->
+<!-- Supersedes: semantics-collections v11 -->
 
 # Collection Semantics Specification
 
@@ -50,8 +50,8 @@ type.
 All accepted quote forms produce the same runtime `str` value. Quote style only
 controls whether interpolation is enabled while parsing the literal.
 
-A grapheme obtained from a string is represented as a `String`. Vulci does not
-use a separate character type for string elements.
+A grapheme obtained from a string is represented as an ordinary `str`. Vulci
+does not use a separate character type for string elements.
 
 ## Immutability
 
@@ -63,13 +63,14 @@ String indexing operates on Unicode grapheme clusters.
 
 String indexing is zero-based.
 
-Negative string indexes are invalid.
+The index expression is evaluated exactly once and must produce an `int`.
 
-Bracket indexing requires the indexed grapheme to exist. An out-of-range index
-produces an error.
+Successful indexing returns the grapheme at that position as an ordinary `str`.
 
-Safe indexed access returns `null` when the indexed grapheme does not exist.
-The exact syntax for safe indexed access remains provisional.
+A non-integer index produces `IDX_TYPE`. A negative or out-of-range integer
+index produces `IDX_RANGE`.
+
+Safe indexed access remains undecided and is not an accepted operation.
 
 ## Indexed-Access Performance
 
@@ -103,6 +104,21 @@ list[]
 set[]
 map[]
 ```
+
+List and set element expressions are evaluated exactly once from left to right.
+Every set element expression is evaluated, including expressions whose resulting
+value duplicates an earlier member. The first equal value determines that
+member's insertion position.
+
+Map entries are processed exactly once from left to right. Within each entry, the
+key expression is evaluated before the value expression. Immediately after the
+key is evaluated, its map-key eligibility and duplication are validated using
+normal map-key identity. Only after both validations succeed is that entry's
+value expression evaluated.
+
+If evaluating any collection-literal expression fails, later expressions are not
+evaluated. An ineligible or duplicate map key produces its runtime error without
+evaluating that entry's value or any later entry.
 
 ---
 
@@ -167,8 +183,14 @@ fn process(list items) {
 
 The same rule applies to bare `set` and `map` boundary types.
 
-Explicit unrestricted collection types are preferred. The exact explicit
-unrestricted `map` type syntax remains undecided.
+The accepted explicit unrestricted forms are `list<any>`, `set<any>`, and
+`map<any, any>`. A map may also leave only one side unrestricted through
+`map<any, V>` or `map<K, any>`, where the other argument is any otherwise
+accepted type. Explicit unrestricted forms do not emit a warning. `any` remains
+invalid as a member of a union.
+
+An unrestricted map type does not relax map-key eligibility. Every actual map
+key must still use an accepted map-key type.
 
 ## Broad `collection` Boundary Type
 
@@ -207,15 +229,6 @@ At function entry, a `collection` boundary checks only that the value is a
 produces a runtime error only when execution reaches that operation. Untaken
 code paths do not produce that error.
 
-The boolean properties `isList`, `isSet`, and `isMap` may be used to inspect the
-concrete runtime type of a broadly typed collection value.
-
-```text
-fn do_something(collection values) {
-    values.isMap
-}
-```
-
 The general `is Type` operator uses the same collection type-matching rules as
 function-boundary validation. A bare `list`, `set`, or `map` type matches a value
 of that concrete collection type without restricting its contained types. A
@@ -225,8 +238,10 @@ entry satisfies the declared type arguments. The broad `collection` type matches
 `list`, `set`, and `map` values and does not match strings or non-collection
 values.
 
-The `isList`, `isSet`, and `isMap` properties remain accepted alongside the
-general `is Type` operator.
+The explicit unrestricted forms use the same matching rule with `any` accepting
+every contained value in its position. Concrete runtime collection types are
+inspected only through the general `is Type` operator. The properties `isList`,
+`isSet`, and `isMap` are not accepted.
 
 Pattern matching for runtime type handling is deferred to a later phase.
 
@@ -242,7 +257,7 @@ The initially accepted immutable update operations are:
 
 - `list.add(value)` appends the value and returns a new list.
 - `set.add(value)` adds the value when absent and returns a new set.
-- `map.add(key, value)` adds the key-value pair and returns a new map.
+- `map.add(key, value)` adds an absent key-value pair and returns a new map.
 - Strings do not support generic `add()`.
 - `list.remove(value)` removes the first equal value and returns a new list.
 - `set.remove(value)` removes the matching member and returns a new set.
@@ -253,10 +268,49 @@ Existing nested immutable values may be structurally reused. A collection
 operation creates a new outer collection but does not require deep-copying
 nested collections.
 
+Collection literals and update operations retain their contained values according
+to each value's normal runtime assignment semantics. Value-semantic tuples,
+anonymous objects, and structs therefore remain independent values, while future
+reference-semantic values retain their reference semantics. Accessing a contained
+value follows those same assignment semantics. Collection immutability does not
+deep-freeze a future reference-semantic value stored inside a collection.
+
+`map.add(key, value)` requires an eligible key that is absent under normal map-key
+identity. An existing key produces a duplicate-key runtime error even when the
+existing and supplied values are equal. A successfully added key is placed last
+in map insertion order; `map.add()` never replaces an existing value.
+
 Explicit mutability may be introduced in a later phase, potentially through a
 `mutable` language feature. No such feature is currently accepted.
 
 ---
+
+# 7. Printing
+
+Collections use deterministic compact literal-like printing:
+
+```text
+list[1, 2, "hello"]
+set[1, 2, 3]
+map["a": 1, "b": 2]
+list[]
+set[]
+map[]
+```
+
+Lists print in list order, sets in insertion order, and maps in key insertion
+order. Items and entries are separated by a comma followed by one space. Map keys
+and values are separated by a colon followed by one space. Output is single-line
+and has no trailing comma.
+
+Nested collections are printed recursively. Other nested values use their normal
+accepted printed representation. A `str` nested inside a collection uses a
+double-quoted representation. Backslash, double quote, newline, tab, and carriage
+return are escaped as `\\`, `\"`, `\n`, `\t`, and `\r` respectively. Directly
+printing a top-level `str` continues to output its contents without quotes.
+
+Printing a value that entered a function through the broad `collection` type uses
+the value's concrete runtime collection form.
 
 ---
 
@@ -276,6 +330,9 @@ Invalid positional access produces a runtime error.
 
 Accessing a missing map key produces a runtime error.
 
+A successfully accessed list item or map value is produced according to that
+value's normal runtime assignment semantics.
+
 Safe access remains a separate undecided operation or syntax.
 
 Sets do not support bracket access or positional access.
@@ -290,6 +347,11 @@ The initially valid map-key types are:
 - `int`
 - `bool`
 - enum values
+
+Map-key eligibility applies to keys used in map literals, keyed access,
+`map.contains()`, and `map.add()`. Supplying an ineligible key to one of these
+operations produces a runtime error. Explicit `any` in a map boundary type does
+not relax this rule.
 
 Future enum map-key identity uses the normal enum equality identity: both the
 declaring enum type and member must match. For example, `Status.Pending` and
@@ -465,11 +527,10 @@ These member-call codes are general-purpose and are reusable by later value type
 Human-readable diagnostic wording may improve without changing a diagnostic's
 identity.
 
-## Phase 10 Exclusions
+## Deferred String Operations
 
-String indexing, slicing, and repetition are not implemented in Phase 10.
-Accepted string-indexing semantics remain assigned to the later collections
-phase.
+String slicing, repetition, and safe indexed access are not accepted operations.
+Safe-access design remains deferred.
 
 ---
 
