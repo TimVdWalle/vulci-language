@@ -22,6 +22,9 @@ const versionVerifier = path.join(
   "scripts",
   "verify-release-version.mjs",
 );
+const packageJson = JSON.parse(
+  readFileSync(path.join(projectRoot, "package.json"), "utf8"),
+) as { version: string };
 
 function runScript(script: string, ...arguments_: string[]) {
   return spawnSync(process.execPath, [script, ...arguments_], {
@@ -31,13 +34,16 @@ function runScript(script: string, ...arguments_: string[]) {
 }
 
 test("accepts only the release tag matching the package version", () => {
-  const accepted = runScript(versionVerifier, "v0.16.0");
+  const accepted = runScript(versionVerifier, `v${packageJson.version}`);
   const rejected = runScript(versionVerifier, "v0.1.15");
 
   assert.equal(accepted.status, 0, accepted.stderr);
-  assert.match(accepted.stdout, /Verified release v0\.16\.0/);
+  assert.equal(accepted.stdout, `Verified release v${packageJson.version}\n`);
   assert.notEqual(rejected.status, 0);
-  assert.match(rejected.stderr, /must match 'v0\.16\.0'/);
+  assert.match(
+    rejected.stderr,
+    new RegExp(`must match 'v${packageJson.version}'`),
+  );
 });
 
 test("generates a two-architecture Homebrew formula with verified checksums", () => {

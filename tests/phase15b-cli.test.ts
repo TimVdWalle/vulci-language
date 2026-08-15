@@ -26,6 +26,13 @@ const projectRoot = path.resolve(
 const vulciCli = path.join(projectRoot, "src", "cli.ts");
 const smokeFile = path.join(projectRoot, "examples", "smoke.vci");
 const debugFile = path.join(projectRoot, "examples", "phase15", "1.vci");
+const packageJson = JSON.parse(
+  readFileSync(path.join(projectRoot, "package.json"), "utf8"),
+) as { version: string };
+const escapedVersion = packageJson.version.replace(
+  /[.*+?^${}()|[\]\\]/g,
+  "\\$&",
+);
 
 function runCli(...arguments_: string[]) {
   return spawnSync(
@@ -43,7 +50,7 @@ test("shows help through both accepted options without an entry path", () => {
     const result = runCli(option);
 
     assert.equal(result.status, 0, result.stderr);
-    assert.match(result.stdout, /^Vulci 0\.16\.0/m);
+    assert.match(result.stdout, new RegExp(`^Vulci ${escapedVersion}`, "m"));
     assert.match(result.stdout, /^Usage$/m);
     assert.match(result.stdout, /--tokens/);
     assert.match(result.stdout, /--no-color/);
@@ -56,7 +63,7 @@ test("shows the version through both accepted options without an entry path", ()
     const result = runCli(option);
 
     assert.equal(result.status, 0, result.stderr);
-    assert.equal(result.stdout, "Vulci 0.16.0\n");
+    assert.equal(result.stdout, `Vulci ${packageJson.version}\n`);
     assert.equal(result.stderr, "");
   }
 });
@@ -139,8 +146,8 @@ test("formats plain and coloured CLI output consistently", () => {
     statements: [],
   };
 
-  assert.match(formatHelp(plain), /^Vulci 0\.16\.0/);
-  assert.equal(formatVersion(), "Vulci 0.16.0\n");
+  assert.match(formatHelp(plain), new RegExp(`^Vulci ${escapedVersion}`));
+  assert.equal(formatVersion(), `Vulci ${packageJson.version}\n`);
   assert.equal(formatTokens(tokens, plain).includes("\u001B["), false);
   assert.equal(formatAst(program, plain, false).includes("\u001B["), false);
   assert.equal(formatHelp(coloured).includes("\u001B[1;36mVulci"), true);
@@ -157,10 +164,5 @@ test("formats plain and coloured CLI output consistently", () => {
 });
 
 test("keeps package and command-line versions aligned", () => {
-  const packageJson = JSON.parse(
-    readFileSync(path.join(projectRoot, "package.json"), "utf8"),
-  ) as { version: string };
-
-  assert.equal(VULCI_VERSION, "0.16.0");
   assert.equal(packageJson.version, VULCI_VERSION);
 });
