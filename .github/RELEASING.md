@@ -1,6 +1,6 @@
 <!-- Phase: Phase 15B CLI, distribution, and quality hardening -->
 
-# How to Release Vulci to Homebrew
+# How to Release Vulci
 
 Use this file when publishing a normal release or when a release fails.
 
@@ -12,68 +12,68 @@ exactly where a problem occurred.
 
 ## `RELEASE` — Publish a new version
 
-Run every terminal command below in the local `vulci-language` repository.
+Run the release command in the local `vulci-language` repository. The example
+version is `0.17.0`; replace it with the version being released.
 
-The example version is `0.16.0`. Replace it everywhere with the version you are
-actually releasing.
-
-### `RELEASE-1` — Update and test the version
-
-Do this on the feature branch that will become the release:
+The repository uses npm and `package-lock.json`, so the canonical command is:
 
 ```bash
-npm version 0.16.0 --no-git-tag-version
-node scripts/verify-release-version.mjs v0.16.0
-npm run check
-npm run coverage
+npm run release -- 0.17.0
 ```
 
-The first command updates both `package.json` and `package-lock.json`. The second
-command must print:
-
-```text
-Verified release v0.16.0
-```
-
-Commit the changes, push the branch, open a pull request, and merge it into
-`main` after review and checks succeed.
-
-### `RELEASE-2` — Update local `main`
-
-After the pull request is merged:
+If pnpm is installed, this equivalent spelling also works:
 
 ```bash
-git switch main
-git pull --ff-only
-git status --short --branch
-node scripts/verify-release-version.mjs v0.16.0
+pnpm run release 0.17.0
 ```
 
-Check these results:
+The prepare stage requires [GitHub CLI](https://cli.github.com/) authenticated
+for this repository. Check it once with `gh auth status`.
 
-- `RELEASE-2A` — You are on `main`.
-- `RELEASE-2B` — Local `main` matches `origin/main`.
-- `RELEASE-2C` — There are no uncommitted files.
-- `RELEASE-2D` — The version verification succeeds.
+### `RELEASE-1` — Prepare the version pull request
 
-Check that the tag has not already been used:
+Merge the release's language or tooling work into `main` first. Then run the
+release command from a clean local `main` whose current version is lower than
+the requested version.
+
+The command performs these guarded operations:
+
+- `RELEASE-PREP-1` — Fetches `origin` and requires local `main` to match
+  `origin/main` exactly.
+- `RELEASE-PREP-2` — Rejects malformed or non-increasing versions and existing
+  release branches or tags.
+- `RELEASE-PREP-3` — Creates `release/v0.17.0`.
+- `RELEASE-PREP-4` — Updates `package.json`, both version fields in
+  `package-lock.json`, and `src/version.ts`.
+- `RELEASE-PREP-5` — Verifies version alignment, runs `npm run check`, and runs
+  `npm run coverage`.
+- `RELEASE-PREP-6` — Commits only the three version files, pushes the branch,
+  and opens the release pull request.
+
+If the requested version is already present on `origin/main`, the command skips
+the prepare stage and proceeds to `RELEASE-3`.
+
+### `RELEASE-2` — Review and merge the pull request
+
+Review the version-only pull request and wait for its GitHub check to succeed.
+Merge it into `main`. The release command deliberately does not approve or merge
+its own pull request.
+
+### `RELEASE-3` — Publish after the merge
+
+Run the exact same command again:
 
 ```bash
-git tag --list v0.16.0
-git ls-remote --tags origin refs/tags/v0.16.0
+npm run release -- 0.17.0
 ```
 
-Both commands should return no matching tag.
+The command fetches the merged `origin/main`, switches to and fast-forwards
+local `main` when needed, verifies every version source, reruns checks and
+coverage, creates the annotated `v0.17.0` tag, and pushes it. Pushing the tag
+starts the release workflow.
 
-### `RELEASE-3` — Create and push the tag
-
-```bash
-git tag -a v0.16.0 -m "Vulci 0.16.0"
-git push origin v0.16.0
-```
-
-The second command starts the release workflow. Creating the tag only on your
-Mac does not start anything on GitHub.
+If the remote tag already points to the synchronized `main` commit, the command
+reports that the release is already published without moving or recreating it.
 
 ### `RELEASE-4` — Wait for GitHub Actions
 
@@ -121,6 +121,8 @@ The version printed by `vulci --version` must be the version you released.
 ## `RELEASE-RULES` — Important rules
 
 - `RULE-MAIN` — Tag only after the release commit is merged into `main`.
+- `RULE-PR` — Keep the version update reviewable; never make the release command
+  merge its own pull request.
 - `RULE-NEW` — Use a new, increasing version for every release.
 - `RULE-TAG` — Never reuse or move a tag after pushing it.
 - `RULE-WAIT` — Wait for all five workflow jobs before announcing the release.
@@ -135,6 +137,20 @@ The version printed by `vulci --version` must be the version you released.
 Open the release run in GitHub Actions. The first red job tells you which section
 below to use.
 
+### `FAIL-COMMAND` — The local release command stopped
+
+- `FAIL-COMMAND-1` — If the working tree is not clean, commit or stash only the
+  work you intend to preserve. The command never stashes unrelated changes.
+- `FAIL-COMMAND-2` — If local `main` differs from `origin/main`, inspect the
+  divergence instead of forcing it into alignment.
+- `FAIL-COMMAND-3` — If `gh` is unavailable or unauthenticated, install GitHub
+  CLI and run `gh auth login` before retrying the prepare stage.
+- `FAIL-COMMAND-4` — If a check fails after the release branch is created, the
+  command leaves the three version-file changes visible for diagnosis. Do not
+  tag that branch.
+- `FAIL-COMMAND-5` — If pushing succeeded but pull-request creation failed, run
+  `gh pr create --base main --head release/v<version>` after fixing GitHub CLI.
+
 ### `FAIL-NO-RUN` — No workflow appeared
 
 - `FAIL-NO-RUN-1` — Confirm the tag begins with `v`.
@@ -143,8 +159,9 @@ below to use.
 
 ### `FAIL-CHECKS` — `Checks` is red
 
-- `FAIL-CHECKS-1` — If `Verify release version` failed, the tag and
-  `package.json` version do not match exactly.
+- `FAIL-CHECKS-1` — If `Verify release version` failed, compare the tag,
+  `package.json`, both root version fields in `package-lock.json`, and
+  `src/version.ts`. They must match exactly.
 - `FAIL-CHECKS-2` — If another command failed, open that step's log and run the
   same named command locally.
 
