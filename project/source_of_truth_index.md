@@ -1,8 +1,9 @@
-<!-- Phase: Documentation restructuring after Phase 13 -->
+<!-- Phase: Phase 16 collections -->
 <!-- Document ID: source-of-truth-index -->
-<!-- Version: 1 -->
+<!-- Version: 2 -->
 <!-- Status: Active -->
 <!-- Authority: Routing and responsibility map for project documents -->
+<!-- Supersedes: source-of-truth-index v1 -->
 
 # Source-of-Truth Index
 
@@ -27,7 +28,15 @@ relevant.
 | `implementation-phases`   | Implementation order, dependencies, and completion criteria | Owning specifications and `implementation-strategy` |
 | `implementation-strategy` | Reference-interpreter architecture and mechanics            | Owning semantics and `implementation-phases`        |
 | `decision-register`       | Non-accepted, deferred, rejected, and superseded items      | The document that would own an accepted decision    |
+| `wishlist`                | Non-authoritative capture list for unreviewed ideas         | Relevant owning authority and `decision-register`   |
 | `language-documentation`  | User-facing explanation of the intended accepted language   | Owning syntax and semantics; not authoritative      |
+
+## Wishlist rule
+
+The Wishlist captures ideas and reminders without accepting them as language,
+implementation, or phase decisions. Every wishlist entry remains undecided until
+it passes the normal design process and is explicitly accepted in its owning
+source-of-truth document. A wishlist entry does not authorize implementation.
 
 ## Ownership rule
 

@@ -1,7 +1,7 @@
-<!-- Phase: Phase 15 pre-collections language improvements -->
+<!-- Phase: Phase 16 collections -->
 <!-- Document ID: decision-register -->
-<!-- Version: 11 -->
-<!-- Supersedes: decision-register v10 -->
+<!-- Version: 12 -->
+<!-- Supersedes: decision-register v11 -->
 <!-- Status: Active -->
 <!-- Authority: Status and history of non-accepted, rejected, deferred, and superseded design items -->
 
@@ -53,7 +53,7 @@ existing deferred match/switch and pattern-matching entries.
 # General semantics
 
 - `dec-sem-001` — Decimal semantics — **Deferred**
-- `dec-sem-002` — Recursive copying of compound values — **Partially superseded** for tuples, anonymous objects, and structs by their accepted assignment-semantics rules; remains **Undecided** for other future compound types. Enum value semantics are accepted separately in the General Semantics Specification
+- `dec-sem-002` — Recursive copying of compound values — **Partially superseded** for tuples, anonymous objects, structs, and collections by their accepted assignment-semantics and structural-reuse rules; remains **Undecided** for other future compound types. Enum value semantics are accepted separately in the General Semantics Specification
 - `dec-sem-003` — Compound-value and class equality — **Partially superseded** for tuples, structs, and collections by their accepted equality rules; remains **Undecided** for anonymous objects, classes, and other future compound types. Enum equality is accepted separately in the General Semantics Specification
 - `dec-sem-004` — Field mutability — **Superseded** by the accepted rules that anonymous-object fields are immutable and struct fields are mutable with value semantics; remains undecided only for future field-bearing types such as classes
 - `dec-sem-005` — Field defaults and required/optional fields — **Partially superseded** for function parameters and struct fields by the accepted rules in the general semantics specification; remains **Undecided** for classes and future field-bearing types
@@ -75,6 +75,7 @@ existing deferred match/switch and pattern-matching entries.
 - `dec-col-syn-003` — Pattern-matching syntax for collection runtime types — **Deferred**
 - `dec-col-syn-004` — Capabilities-system syntax — **Deferred**
 - `dec-col-syn-005` — `.length` as a string/collection count alias — **Rejected** in favour of the accepted `count()` operation
+- `dec-col-syn-006` — `.isList`, `.isSet`, and `.isMap` concrete-kind properties — **Superseded** by the accepted general `is Type` operator for concrete, typed, and broad collection type inspection
 
 Callback-style `each()` forms are **Superseded** by the accepted language-level,
 brace-delimited `each` loop decision. Lambdas may later provide alternative
@@ -84,10 +85,10 @@ collection processing, but no replacement decision is accepted.
 
 - `dec-col-sem-001` — Remaining `each` binding, result, map traversal, and early-termination semantics — **Undecided**
 - `dec-col-sem-002` — Safe collection-access behaviour — **Undecided**
-- `dec-col-sem-003` — Explicit unrestricted `map` boundary type — **Undecided**
+- `dec-col-sem-003` — Explicit unrestricted `map` boundary type — **Superseded** by the accepted `map<any, any>`, `map<any, V>`, and `map<K, any>` forms
 - `dec-col-sem-004` — Collection conversion operations — **Undecided**
 - `dec-col-sem-005` — Exact `map()` result semantics — **Undecided**
-- `dec-col-sem-006` — Bulk additions and immutable update/removal operations — **Undecided**
+- `dec-col-sem-006` — Bulk additions and immutable update/removal operations — **Partially superseded** by the accepted initial `add()` and `remove()` operations; bulk additions and later index/key removal, replacement, and update operations remain **Undecided**
 - `dec-col-sem-007` — Exact `reduce()` semantics — **Deferred until `ph29` design**
 - `dec-col-sem-008` — Exact `group()` semantics — **Deferred until `ph30` design**
 - `dec-col-sem-009` — Exact `any()` and `all()` semantics — **Undecided**

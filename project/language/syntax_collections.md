@@ -1,9 +1,9 @@
-<!-- Phase: Phase 15 pre-collections language improvements -->
+<!-- Phase: Phase 16 collections -->
 <!-- Document ID: syntax-collections -->
-<!-- Version: 10 -->
+<!-- Version: 11 -->
 <!-- Status: Active -->
 <!-- Authority: Accepted string- and collection-specific Vulci syntax -->
-<!-- Supersedes: syntax-collections v9 -->
+<!-- Supersedes: syntax-collections v10 -->
 
 # Vulci Collection Syntax Specification
 
@@ -76,6 +76,20 @@ list<int|str>
 map<str, int|null>
 ```
 
+`any` may be used as a complete collection type argument. The accepted explicit
+unrestricted forms are:
+
+```text
+list<any>
+set<any>
+map<any, any>
+map<any, V>
+map<K, any>
+```
+
+`K` and `V` above stand for any otherwise accepted type form. `any` remains
+invalid as a member of a union.
+
 These accepted built-in collection type arguments do not establish general
 user-defined generic syntax. General user-defined generic syntax remains
 deferred under `dec-syn-005` in the Decision Register.
@@ -94,8 +108,8 @@ semantic rules defined in the Collection Semantics Specification.
 
 ## Broad `collection` Type
 
-The keyword `collection` may be used as a function parameter or return type
-without naming a concrete collection type.
+The built-in type name `collection` may be used as a function parameter or
+return type without naming a concrete collection type.
 
 ```text
 fn do_something(collection values) {
@@ -109,21 +123,18 @@ fn create_values() returns collection {
 Its membership and runtime behaviour are defined in the Collection Semantics
 Specification.
 
+`collection` may also appear on the right-hand side of the general `is Type`
+operator. It does not accept type arguments; forms such as `collection<any>` are
+invalid. It follows the same contextual identifier rules as `list`, `set`, and
+`map`.
+
 ---
 
 # 3. Runtime Collection Type Inspection
 
-The boolean properties `isList`, `isSet`, and `isMap` inspect the concrete
-runtime type of a collection value.
-
-```text
-values.isList
-values.isSet
-values.isMap
-```
-
-Collection type forms may also be used with the general `is Type` operator
-defined by the General Syntax Specification.
+Collection runtime types are inspected with the general `is Type` operator
+defined by the General Syntax Specification. Accepted collection type forms may
+appear on its right-hand side.
 
 ```text
 values is list
@@ -132,8 +143,7 @@ values is map<str, int>
 values is collection
 ```
 
-The `isList`, `isSet`, and `isMap` properties remain accepted alongside the
-general `is Type` operator.
+The properties `isList`, `isSet`, and `isMap` are not accepted syntax.
 
 ---
 
@@ -196,8 +206,8 @@ are mixed in one expression, but they are not required by the syntax.
 support the ordinary equality and ordering operators. `.length` is not an
 accepted synonym; strings use `count()` consistently with collections.
 
-String indexing, slicing, and repetition are not part of Phase 10. Accepted
-string indexing remains scheduled with collections rather than Phase 10.
+String indexing uses the accepted bracket syntax shown above. String slicing and
+repetition are not accepted.
 
 ---
 
