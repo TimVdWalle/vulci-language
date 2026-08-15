@@ -1,4 +1,4 @@
-// Phase 15
+// Phase 16
 
 import {
   FunctionCall,
@@ -9,6 +9,7 @@ import {
 import { RuntimeValue } from "../runtime-value.js";
 import { Token } from "../token.js";
 import { BUILT_IN_TYPE_NAMES } from "../type-names.js";
+import { isCollectionValue, isEligibleMapKey } from "../collection-runtime.js";
 import { EvaluatorContext } from "./evaluator-context.js";
 
 export abstract class TypeChecker extends EvaluatorContext {
@@ -68,6 +69,13 @@ export abstract class TypeChecker extends EvaluatorContext {
         continue;
       }
 
+      if (member.type === "CollectionType") {
+        for (const argument of member.arguments) {
+          this.assertKnownTypeAnnotation(argument);
+        }
+        continue;
+      }
+
       if (
         !BUILT_IN_TYPE_NAMES.has(member.lexeme) &&
         !this.structs.has(member.lexeme) &&
@@ -92,6 +100,36 @@ export abstract class TypeChecker extends EvaluatorContext {
       );
     }
 
+    if (member.type === "CollectionType") {
+      if (member.lexeme === "list") {
+        return (
+          value.type === "List" &&
+          value.items.every((item) =>
+            this.valueMatchesType(item, member.arguments[0]!),
+          )
+        );
+      }
+
+      if (member.lexeme === "set") {
+        return (
+          value.type === "Set" &&
+          value.items.every((item) =>
+            this.valueMatchesType(item, member.arguments[0]!),
+          )
+        );
+      }
+
+      return (
+        value.type === "Map" &&
+        value.entries.every(
+          (entry) =>
+            isEligibleMapKey(entry.key) &&
+            this.valueMatchesType(entry.key, member.arguments[0]!) &&
+            this.valueMatchesType(entry.value, member.arguments[1]!),
+        )
+      );
+    }
+
     switch (member.lexeme) {
       case "any":
         return true;
@@ -104,9 +142,13 @@ export abstract class TypeChecker extends EvaluatorContext {
       case "str":
         return value.type === "String";
       case "list":
+        return value.type === "List";
       case "set":
+        return value.type === "Set";
       case "map":
-        return false;
+        return value.type === "Map";
+      case "collection":
+        return isCollectionValue(value);
       default:
         return (
           (value.type === "Struct" && value.name === member.lexeme) ||
@@ -123,6 +165,11 @@ export abstract class TypeChecker extends EvaluatorContext {
 
   private typeMemberName(member: TypeMember): string {
     if (member.type === "NamedType") return member.lexeme;
+    if (member.type === "CollectionType") {
+      return `${member.lexeme}<${member.arguments
+        .map((item) => this.typeAnnotationName(item))
+        .join(", ")}>`;
+    }
     return `tuple(${member.members.map((item) => this.typeAnnotationName(item)).join(", ")})`;
   }
 

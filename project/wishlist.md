@@ -31,3 +31,9 @@ result << echo {{startValue }} // execute and capture result
 
 << echo {{ startValue }} | grep "whatever "
 // just execute
+
+## Print in colors
+
+### Syntax
+
+make a proposal

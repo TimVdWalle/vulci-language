@@ -1,4 +1,4 @@
-// Phase 15
+// Phase 16
 
 import {
   Expression,
@@ -93,6 +93,10 @@ function collectStructEdges(
       for (const nested of member.members) {
         collectStructEdges(nested, structs, nullable, field, edges);
       }
+      continue;
+    }
+
+    if (member.type === "CollectionType") {
       continue;
     }
 
@@ -205,6 +209,16 @@ function findExpressionConflict(
     case "StructConstruction":
       return findExpressionListConflict(
         expression.fields.map((field) => field.value),
+        structNames,
+      );
+
+    case "ListLiteral":
+    case "SetLiteral":
+      return findExpressionListConflict(expression.items, structNames);
+
+    case "MapLiteral":
+      return findExpressionListConflict(
+        expression.entries.flatMap((entry) => [entry.key, entry.value]),
         structNames,
       );
 

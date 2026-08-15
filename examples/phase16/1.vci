@@ -1,0 +1,10 @@
+// Phase 16
+
+$items = list[1, 2, 2]
+$unique = set[1, 2, 2]
+$lookup = map["items": $items, "unique": $unique]
+
+print($items.add(3))
+print($unique.add(3))
+print($lookup)
+print("á"[0])

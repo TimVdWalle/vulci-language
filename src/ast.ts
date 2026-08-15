@@ -1,6 +1,19 @@
-// Phase 15
+// Phase 16
 
 import { Token } from "./token.js";
+import type {
+  CollectionLiteral,
+  CollectionTypeMember,
+} from "./collection-ast.js";
+
+export type {
+  CollectionLiteral,
+  CollectionTypeMember,
+  ListLiteral,
+  MapLiteral,
+  MapLiteralEntry,
+  SetLiteral,
+} from "./collection-ast.js";
 
 export interface Program {
   type: "Program";
@@ -26,6 +39,7 @@ export type Expression =
   | StringLiteral
   | BooleanLiteral
   | NullLiteral
+  | CollectionLiteral
   | TupleLiteral
   | AnonymousObjectLiteral
   | StructConstruction
@@ -127,7 +141,15 @@ export type AssignmentExpression =
   VariableAssignmentExpression | MemberAssignmentExpression;
 
 export type BuiltInTypeName =
-  "int" | "bool" | "str" | "list" | "set" | "map" | "any" | "null";
+  | "int"
+  | "bool"
+  | "str"
+  | "list"
+  | "set"
+  | "map"
+  | "collection"
+  | "any"
+  | "null";
 
 export interface NamedTypeMember {
   type: "NamedType";
@@ -142,7 +164,8 @@ export interface TupleTypeMember {
   members: TypeAnnotation[];
 }
 
-export type TypeMember = NamedTypeMember | TupleTypeMember;
+export type TypeMember =
+  NamedTypeMember | TupleTypeMember | CollectionTypeMember;
 
 export interface TypeAnnotation {
   members: TypeMember[];

@@ -1,4 +1,4 @@
-// Phase 14
+// Phase 16
 
 import { MemberCall, StringLiteral } from "../ast.js";
 import {
@@ -8,9 +8,10 @@ import {
   StringValue,
   TRUE_VALUE,
 } from "../runtime-value.js";
-import { StructEvaluator } from "./struct-evaluator.js";
+import { createStringValue, graphemesOf } from "../graphemes.js";
+import { CollectionEvaluator } from "./collection-evaluator.js";
 
-export abstract class StringEvaluator extends StructEvaluator {
+export abstract class StringEvaluator extends CollectionEvaluator {
   protected evaluateStringLiteral(expression: StringLiteral): StringValue {
     let value = "";
 
@@ -44,7 +45,7 @@ export abstract class StringEvaluator extends StructEvaluator {
       }
     }
 
-    return { type: "String", value };
+    return createStringValue(value);
   }
 
   protected evaluateStringMemberCall(
@@ -75,10 +76,7 @@ export abstract class StringEvaluator extends StructEvaluator {
 
       case "count": {
         this.requireMemberArgumentCount(expression, arguments_.length, 0);
-        const segmenter = new Intl.Segmenter(undefined, {
-          granularity: "grapheme",
-        });
-        const count = Array.from(segmenter.segment(receiver.value)).length;
+        const count = graphemesOf(receiver).length;
         const result: IntegerValue = { type: "Integer", value: count };
 
         return result;

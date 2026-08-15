@@ -1,4 +1,4 @@
-// Phase 13
+// Phase 16
 
 import {
   Expression,
@@ -54,6 +54,7 @@ export abstract class FunctionParser extends BlockParser {
 
       if (startsTypedParameter) {
         parameterType = this.finishTypeAnnotation(first);
+        this.emitBareCollectionTypeWarnings(parameterType);
         hasExplicitParameterType = true;
 
         parameter = this.consume(
@@ -141,6 +142,7 @@ export abstract class FunctionParser extends BlockParser {
       );
 
       returnType = this.finishTypeAnnotation(firstReturnType);
+      this.emitBareCollectionTypeWarnings(returnType);
     } else {
       this.emitStrongWarning(
         `function '${name.lexeme}' has no declared return type and is treated as 'any'`,

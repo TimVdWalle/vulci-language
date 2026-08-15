@@ -1,4 +1,4 @@
-// Phase 13
+// Phase 16
 
 import { Expression } from "../ast.js";
 import {
@@ -8,6 +8,7 @@ import {
   TRUE_VALUE,
 } from "../runtime-value.js";
 import { Token, TokenType } from "../token.js";
+import { createStringValue } from "../graphemes.js";
 import { ComparisonEvaluator } from "./comparison-evaluator.js";
 import { runtimeValuesEqual } from "./runtime-equality.js";
 
@@ -111,13 +112,11 @@ export abstract class OperatorEvaluator extends ComparisonEvaluator {
 
     if (operator.type === TokenType.Plus || operator.type === TokenType.Tilde) {
       if (left.type === "String" && right.type === "String") {
-        return {
-          type: "String",
-          value:
-            operator.type === TokenType.Plus
-              ? left.value + right.value
-              : `${left.value} ${right.value}`,
-        };
+        return createStringValue(
+          operator.type === TokenType.Plus
+            ? left.value + right.value
+            : `${left.value} ${right.value}`,
+        );
       }
 
       if (operator.type === TokenType.Tilde) {

@@ -1,4 +1,4 @@
-// Phase 15B
+// Phase 16
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -43,7 +43,7 @@ test("shows help through both accepted options without an entry path", () => {
     const result = runCli(option);
 
     assert.equal(result.status, 0, result.stderr);
-    assert.match(result.stdout, /^Vulci 0\.15\.0/m);
+    assert.match(result.stdout, /^Vulci 0\.16\.0/m);
     assert.match(result.stdout, /^Usage$/m);
     assert.match(result.stdout, /--tokens/);
     assert.match(result.stdout, /--no-color/);
@@ -56,7 +56,7 @@ test("shows the version through both accepted options without an entry path", ()
     const result = runCli(option);
 
     assert.equal(result.status, 0, result.stderr);
-    assert.equal(result.stdout, "Vulci 0.15.0\n");
+    assert.equal(result.stdout, "Vulci 0.16.0\n");
     assert.equal(result.stderr, "");
   }
 });
@@ -139,8 +139,8 @@ test("formats plain and coloured CLI output consistently", () => {
     statements: [],
   };
 
-  assert.match(formatHelp(plain), /^Vulci 0\.15\.0/);
-  assert.equal(formatVersion(), "Vulci 0.15.0\n");
+  assert.match(formatHelp(plain), /^Vulci 0\.16\.0/);
+  assert.equal(formatVersion(), "Vulci 0.16.0\n");
   assert.equal(formatTokens(tokens, plain).includes("\u001B["), false);
   assert.equal(formatAst(program, plain, false).includes("\u001B["), false);
   assert.equal(formatHelp(coloured).includes("\u001B[1;36mVulci"), true);
@@ -161,6 +161,6 @@ test("keeps package and command-line versions aligned", () => {
     readFileSync(path.join(projectRoot, "package.json"), "utf8"),
   ) as { version: string };
 
-  assert.equal(VULCI_VERSION, "0.15.0");
+  assert.equal(VULCI_VERSION, "0.16.0");
   assert.equal(packageJson.version, VULCI_VERSION);
 });

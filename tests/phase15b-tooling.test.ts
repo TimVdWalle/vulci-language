@@ -1,4 +1,4 @@
-// Phase 15B
+// Phase 16
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -31,13 +31,13 @@ function runScript(script: string, ...arguments_: string[]) {
 }
 
 test("accepts only the release tag matching the package version", () => {
-  const accepted = runScript(versionVerifier, "v0.15.0");
+  const accepted = runScript(versionVerifier, "v0.16.0");
   const rejected = runScript(versionVerifier, "v0.1.15");
 
   assert.equal(accepted.status, 0, accepted.stderr);
-  assert.match(accepted.stdout, /Verified release v0\.15\.0/);
+  assert.match(accepted.stdout, /Verified release v0\.16\.0/);
   assert.notEqual(rejected.status, 0);
-  assert.match(rejected.stderr, /must match 'v0\.15\.0'/);
+  assert.match(rejected.stderr, /must match 'v0\.16\.0'/);
 });
 
 test("generates a two-architecture Homebrew formula with verified checksums", () => {
@@ -56,7 +56,7 @@ test("generates a two-architecture Homebrew formula with verified checksums", ()
       formulaGenerator,
       tapDirectory,
       "TimVdWalle/vulci-language",
-      "0.15.0",
+      "0.16.0",
       armChecksumPath,
       x64ChecksumPath,
     );
@@ -69,8 +69,8 @@ test("generates a two-architecture Homebrew formula with verified checksums", ()
     );
 
     assert.match(formula, /^# Phase: Phase 15B/m);
-    assert.match(formula, /vulci-0\.15\.0-macos-arm64/);
-    assert.match(formula, /vulci-0\.15\.0-macos-x64/);
+    assert.match(formula, /vulci-0\.16\.0-macos-arm64/);
+    assert.match(formula, /vulci-0\.16\.0-macos-x64/);
     assert.match(formula, new RegExp(`sha256 "${"a".repeat(64)}"`));
     assert.match(formula, new RegExp(`sha256 "${"b".repeat(64)}"`));
     assert.match(formula, /chmod 0755, bin\/"vulci"/);
@@ -94,7 +94,7 @@ test("rejects missing formula arguments and malformed checksums", () => {
       formulaGenerator,
       path.join(temporaryDirectory, "tap"),
       "TimVdWalle/vulci-language",
-      "0.15.0",
+      "0.16.0",
       invalidChecksumPath,
       invalidChecksumPath,
     );

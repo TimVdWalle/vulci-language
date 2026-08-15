@@ -1,4 +1,4 @@
-// Phase 15
+// Phase 16
 
 import {
   Expression,
@@ -110,6 +110,16 @@ function collectExpressionTypeAnnotations(
       return expression.fields.flatMap((field) =>
         collectExpressionTypeAnnotations(field.value),
       );
+
+    case "ListLiteral":
+    case "SetLiteral":
+      return expression.items.flatMap(collectExpressionTypeAnnotations);
+
+    case "MapLiteral":
+      return expression.entries.flatMap((entry) => [
+        ...collectExpressionTypeAnnotations(entry.key),
+        ...collectExpressionTypeAnnotations(entry.value),
+      ]);
 
     case "TupleLiteral":
       return expression.members.flatMap(collectExpressionTypeAnnotations);
