@@ -36,4 +36,18 @@ result << echo {{startValue }} // execute and capture result
 
 ### Syntax
 
-make a proposal
+Add simple color methods to strings for terminal output, inspired by Ruby’s colorize style.
+print("Success".green)
+print("Error".red)
+print("Status: " + "FAILED".red)
+Color applies only to the styled string portion, allowing mixed colors within one printed line without special print syntax or manual ANSI escape codes.
+
+print("Success".green)
+print("Error".red)
+print("Status: " + "FAILED".red)
+
+## Postfix if
+
+### Syntax
+
+return "ok" if (value == true)

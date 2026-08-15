@@ -1,6 +1,6 @@
-# Phase: Phase 15 pre-collections language improvements
+# Phase: Phase 16 collections
 
 interface:
   display_name: "Vulci Design"
-  short_description: "Audit Vulci language design decisions"
-  default_prompt: "Use $vulci-design to audit this Vulci language-design proposal."
+  short_description: "Audit Vulci design and create phase prompts"
+  default_prompt: "Use $vulci-design to audit a Vulci decision or create the next-phase kickoff prompt."
