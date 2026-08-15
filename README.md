@@ -133,14 +133,3 @@ macOS. Once the Homebrew tap contains its generated formula, install Vulci with:
 ```bash
 brew install TimVdWalle/vulci/vulci
 ```
-
-Maintainers publish a release by pushing a tag matching the package version,
-such as `v0.15.0`. The release workflow builds and tests both macOS executables,
-publishes their checksums, and updates `TimVdWalle/homebrew-vulci`. The repository
-secret `HOMEBREW_TAP_TOKEN` must contain a fine-grained token with contents write
-access to that tap repository.
-
-Before the first release, create the public `TimVdWalle/homebrew-vulci`
-repository with an initial `main` branch, then add `HOMEBREW_TAP_TOKEN` to this
-repository's Actions secrets. The first version tag will generate and commit the
-tap formula automatically.

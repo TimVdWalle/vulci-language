@@ -1,4 +1,6 @@
 # Phase: Phase 15B CLI, distribution, and quality hardening
+# Maintainer guide: .github/RELEASING.md
+# Homebrew connection and token guide: .github/HOMEBREW_CONNECTION.md
 
 name: Release
 
