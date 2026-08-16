@@ -54,6 +54,7 @@ test("parses direct and nested member assignment targets", () => {
 });
 
 test("rejects malformed object fields", () => {
+  assert.throws(() => parse("object(, value: 1)"), /Expected object field/);
   assert.throws(() => parse("object(: 1)"), /Expected object field name/);
   assert.throws(() => parse("object(name 1)"), /Expected ':'/);
   assert.throws(() => parse("object(name:)"), /Expected expression/);

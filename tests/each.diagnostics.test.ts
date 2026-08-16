@@ -33,6 +33,19 @@ test("rejects two bindings for strings, lists, and sets", () => {
       /requires exactly one binding/,
     );
   }
+
+  const program = new Parser(
+    new Lexer('map["key": 1].each(value, key) { }').lex(),
+  ).parse();
+  const statement = program.statements[0];
+  assert.equal(statement?.type, "ExpressionStatement");
+  assert.equal(statement.expression.type, "EachExpression");
+  if (statement.expression.type !== "EachExpression") assert.fail();
+  statement.expression.bindings.push(statement.expression.bindings[0]!);
+  assert.throws(
+    () => new Evaluator(new Environment()).evaluate(program),
+    /requires one or two bindings.*received 3/,
+  );
 });
 
 test("validates typed bindings before the body and later chains", () => {

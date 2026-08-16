@@ -169,6 +169,13 @@ Counter(value: 1).read`),
   );
 });
 
+test("reports calls to unknown struct methods", () => {
+  assert.throws(
+    () => evaluate("struct Empty {}\nEmpty().missing()"),
+    /E_MEM_UNKNOWN.*has no method 'missing'/,
+  );
+});
+
 test("direct reassignment of self is rejected", () => {
   assert.throws(
     () =>

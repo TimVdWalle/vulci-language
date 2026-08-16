@@ -66,6 +66,10 @@ test("rejects malformed tuple literals", () => {
 
 test("rejects invalid tuple types", () => {
   assert.throws(
+    () => declaration("fn use(tuple(, int) value) returns int { 1\n}"),
+    /Expected a tuple member type before ','/,
+  );
+  assert.throws(
     () => declaration("fn use(tuple() value) returns int { 1\n}"),
     /at least two member types/,
   );

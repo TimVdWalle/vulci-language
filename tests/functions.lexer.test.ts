@@ -3,7 +3,17 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { Lexer } from "../src/lexer.js";
+import { LexerState } from "../src/lexer/lexer-state.js";
 import { TokenType } from "../src/token.js";
+
+class LexerStateProbe extends LexerState {
+  public readMissingCharacters(): string[] {
+    const advanced = this.advance();
+    const current = this.peek();
+    this.current = 0;
+    return [advanced, current, this.peekNext()];
+  }
+}
 
 test("lexes Phase 7 keywords", () => {
   const tokens = new Lexer("fn return").lex();
@@ -175,6 +185,19 @@ test("lexes global variable identifiers", () => {
       },
     ],
   );
+});
+
+test("rejects a global prefix without an identifier", () => {
+  assert.throws(() => new Lexer("$").lex(), /Invalid global identifier/);
+});
+
+test("uses sentinels for missing lexer-state characters", () => {
+  const sparseSource = { length: 2 } as unknown as string;
+  assert.deepEqual(new LexerStateProbe(sparseSource).readMissingCharacters(), [
+    "\0",
+    "\0",
+    "\0",
+  ]);
 });
 
 test("lexes global variable access inside a function", () => {

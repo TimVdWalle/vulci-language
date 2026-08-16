@@ -210,6 +210,10 @@ test("rejects a union starting with a separator", () => {
 }`),
     /A union type cannot start with '\|'\./,
   );
+  assert.throws(
+    () => parseWithoutWarnings("fn use() returns |int { 1 }"),
+    /A union type cannot start with '\|'\./,
+  );
 });
 
 test("rejects a trailing parameter union separator", () => {

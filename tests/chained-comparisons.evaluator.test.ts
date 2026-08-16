@@ -7,6 +7,7 @@ import { Evaluator } from "../src/evaluator.js";
 import { Lexer } from "../src/lexer.js";
 import { Parser } from "../src/parser.js";
 import { RuntimeValue } from "../src/runtime-value.js";
+import { TokenType } from "../src/token.js";
 
 function evaluate(source: string): RuntimeValue {
   const tokens = new Lexer(source).lex();
@@ -27,6 +28,13 @@ test("evaluates a false ordering comparison chain", () => {
   assert.deepEqual(evaluate("1 < 2 > 3"), {
     type: "Boolean",
     value: false,
+  });
+});
+
+test("evaluates string ordering comparison chains", () => {
+  assert.deepEqual(evaluate('"a" < "b" < "c"'), {
+    type: "Boolean",
+    value: true,
   });
 });
 
@@ -74,6 +82,27 @@ test("supports null equality chains", () => {
     type: "Boolean",
     value: true,
   });
+});
+
+test("reports unsupported same-type equality in a chain", () => {
+  assert.throws(
+    () => evaluate("object(value: 1) == object(value: 1) == object(value: 1)"),
+    /Invalid operand type in chained comparison/,
+  );
+});
+
+test("reports an unsupported chained operator defensively", () => {
+  const program = new Parser(new Lexer("1 < 2 < 3").lex()).parse();
+  const statement = program.statements[0];
+  assert.equal(statement?.type, "ExpressionStatement");
+  assert.equal(statement.expression.type, "ComparisonChainExpression");
+  if (statement.expression.type !== "ComparisonChainExpression") assert.fail();
+  statement.expression.operators[0]!.type = TokenType.Plus;
+
+  assert.throws(
+    () => new Evaluator(new Environment()).evaluate(program),
+    /Unsupported chained-comparison operator '\<'/,
+  );
 });
 
 test("evaluates arithmetic operands before comparisons", () => {

@@ -2,6 +2,8 @@
 
 import assert from "node:assert/strict";
 import test from "node:test";
+import { runtimeValuesEqual } from "../src/evaluator/runtime-equality.js";
+import { NULL_VALUE, RuntimeValue } from "../src/runtime-value.js";
 import { evaluateStructSource as evaluate } from "./struct-test-helpers.ts";
 
 test("compares equal structs structurally", () => {
@@ -56,6 +58,40 @@ test("empty structs of the same declared type are equal", () => {
     evaluate(`struct Empty {}
 Empty() == Empty()`),
     { type: "Boolean", value: true },
+  );
+});
+
+test("treats different same-type field counts as unequal", () => {
+  assert.equal(
+    runtimeValuesEqual(
+      { type: "Struct", name: "Value", fields: [] },
+      {
+        type: "Struct",
+        name: "Value",
+        fields: [{ name: "field", value: NULL_VALUE }],
+      },
+    ),
+    false,
+  );
+  assert.equal(
+    runtimeValuesEqual(
+      { type: "Struct", name: "Value", fields: [] },
+      NULL_VALUE,
+    ),
+    false,
+  );
+  let typeReads = 0;
+  const unstableType = {
+    get type() {
+      return ++typeReads === 1 ? "Struct" : "Null";
+    },
+  } as unknown as RuntimeValue;
+  assert.equal(
+    runtimeValuesEqual(
+      { type: "Struct", name: "Value", fields: [] },
+      unstableType,
+    ),
+    false,
   );
 });
 

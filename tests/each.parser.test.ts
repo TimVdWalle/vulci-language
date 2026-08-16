@@ -38,6 +38,10 @@ test("parses a receiver-attached each expression and following chain", () => {
   );
   assert.equal(each.expressions[0]?.type, "VariableReference");
   assert.equal(expression.member.lexeme, "contains");
+  assert.equal(
+    parseExpression("list[1].each(item) { item }").type,
+    "EachExpression",
+  );
 });
 
 test("parses independently typed map bindings and an empty body", () => {

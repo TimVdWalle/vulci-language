@@ -11,6 +11,7 @@ import {
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { createRequire, syncBuiltinESMExports } from "node:module";
 import { Environment } from "../src/environment.js";
 import { Evaluator } from "../src/evaluator.js";
 import { Lexer } from "../src/lexer.js";
@@ -85,6 +86,16 @@ test("enforces import path syntax", () => {
   for (const source of invalid) {
     assert.throws(() => parse(source));
   }
+
+  const defensiveTokens = new Lexer("import 'helpers.vci'").lex();
+  const pathToken = defensiveTokens[1]!;
+  delete pathToken.stringSegments;
+  assert.throws(() => new Parser(defensiveTokens).parse(), /\.vci.*extension/);
+  pathToken.stringSegments = new Lexer('"{{null}}"').lex()[0]!.stringSegments;
+  assert.throws(
+    () => new Parser(defensiveTokens).parse(),
+    /cannot use interpolation/,
+  );
 });
 
 test("requires imports to form a leading top-level block", () => {
@@ -111,6 +122,24 @@ test("requires source context and reports unreadable imported files", () => {
       /Unable to import 'missing\.vci'/,
     );
   });
+
+  const mutableFs = createRequire(import.meta.url)("node:fs");
+  const originalReadFileSync = mutableFs.readFileSync;
+  const evaluator = new Evaluator(new Environment());
+  const missingProgram = parse("import 'missing.vci'");
+  mutableFs.readFileSync = () => {
+    throw "unreadable";
+  };
+  syncBuiltinESMExports();
+  try {
+    assert.throws(
+      () => evaluator.evaluate(missingProgram, "/tmp/main.vci"),
+      /Unable to import 'missing\.vci'\. at/,
+    );
+  } finally {
+    mutableFs.readFileSync = originalReadFileSync;
+    syncBuiltinESMExports();
+  }
 });
 
 test("resolves nested imports relative to the importing file", () => {

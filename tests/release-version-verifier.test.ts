@@ -63,6 +63,18 @@ test("reports command lookup failures and cross-file version mismatches", () => 
     }).stdout,
     "captured",
   );
+  assert.deepEqual(runner(process.execPath, ["-e", ""]), {
+    status: 0,
+    stderr: "",
+    stdout: "",
+  });
+  assert.equal(
+    runner(process.execPath, ["-e", "process.kill(process.pid, 'SIGTERM')"], {
+      allowFailure: true,
+      capture: true,
+    }).status,
+    1,
+  );
   assert.throws(
     () =>
       remoteRefExists(
@@ -80,6 +92,28 @@ test("reports command lookup failures and cross-file version mismatches", () => 
   );
   assert.equal(usage.status, 1);
   assert.match(usage.stderr, /major\.minor\.patch/);
+
+  const errorOverride = path.join(temporaryDirectory, "error-override.cjs");
+  writeFileSync(
+    errorOverride,
+    `// Phase: Phase 15B CLI, distribution, and quality hardening
+const NativeError = globalThis.Error;
+globalThis.Error = class extends NativeError {
+  static [Symbol.hasInstance]() { return false; }
+};
+`,
+  );
+  const nonErrorUsage = spawnSync(
+    process.execPath,
+    [
+      "--require",
+      errorOverride,
+      path.join(projectRoot, "scripts", "release.mjs"),
+    ],
+    { encoding: "utf8" },
+  );
+  assert.equal(nonErrorUsage.status, 1);
+  assert.match(nonErrorUsage.stderr, /major\.minor\.patch/);
 
   try {
     mkdirSync(path.join(temporaryDirectory, "scripts"));

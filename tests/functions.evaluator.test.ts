@@ -18,6 +18,10 @@ function evaluate(
   return new Evaluator(environment).evaluate(program);
 }
 
+function native(call: () => RuntimeValue) {
+  return { type: "NativeFunction" as const, parameters: [], call };
+}
+
 test("calls a function with arguments", () => {
   assert.deepEqual(
     evaluate(`fn add(left, right) {
@@ -258,6 +262,47 @@ send(42)`,
       value: 42,
     },
   ]);
+});
+
+test("handles native-function edge paths inside user functions", () => {
+  const environment = new Environment();
+  const answer = native(() => ({ type: "Integer", value: 42 }));
+  const provider = native(() => answer);
+  environment.define("answer", answer);
+  environment.define("provide", provider);
+  assert.deepEqual(
+    evaluate(
+      "fn read() returns int { direct = answer\nlocal = provide()\nlocal()\ndirect + local }\nread()",
+      environment,
+    ),
+    { type: "Integer", value: 84 },
+  );
+
+  const explode = native(() => {
+    throw new RangeError("host recursion");
+  });
+  environment.define("explode", explode);
+  const recursiveSource = "fn wrapper() returns null { explode() }\nwrapper()";
+  assert.throws(
+    () => evaluate(recursiveSource, environment),
+    /Maximum function call depth exceeded while calling 'wrapper'/,
+  );
+
+  const metadata = { name: "value", required: false };
+  const parameters = [metadata];
+  let reads = 0;
+  Object.defineProperty(parameters, 0, {
+    get: () => (++reads === 4 ? undefined : metadata),
+  });
+  environment.define("incomplete", {
+    type: "NativeFunction",
+    parameters,
+    call: () => ({ type: "Null" }),
+  });
+  assert.throws(
+    () => evaluate("incomplete()", environment),
+    /has no value for parameter '0'/,
+  );
 });
 
 test("rejects a function name that collides with a native function", () => {

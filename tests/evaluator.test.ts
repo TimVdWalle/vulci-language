@@ -7,6 +7,36 @@ import { Evaluator } from "../src/evaluator.js";
 import { Lexer } from "../src/lexer.js";
 import { Parser } from "../src/parser.js";
 import { RuntimeValue } from "../src/runtime-value.js";
+import { TokenType } from "../src/token.js";
+
+const unsupportedToken = new Lexer("(").lex()[0]!;
+const integerValue: RuntimeValue = { type: "Integer", value: 1 };
+
+class OperatorProbe extends Evaluator {
+  public evaluateUnsupportedUnary(): RuntimeValue {
+    return this.evaluateUnaryExpression(
+      { type: TokenType.Plus, lexeme: "+", line: 1, column: 1 },
+      { type: "Integer", value: 1 },
+    );
+  }
+
+  public evaluateUnsupportedBinary(): RuntimeValue {
+    return this.evaluateBinaryExpression(
+      unsupportedToken,
+      integerValue,
+      integerValue,
+    );
+  }
+
+  public evaluateUnsupportedOrdering(): RuntimeValue {
+    return this.evaluateOrderingComparison(
+      unsupportedToken,
+      integerValue,
+      integerValue,
+    );
+  }
+}
+
 function evaluate(source: string, environment: Environment): RuntimeValue {
   const tokens = new Lexer(source).lex();
   const program = new Parser(tokens).parse();
@@ -65,6 +95,7 @@ $answer()
       ),
     /Cannot call '\$answer': value is not a function/,
   );
+  assert.throws(() => evaluate("self = 1", environment), /E_SELF_CONTEXT/);
 });
 test("evaluates addition", () => {
   const result = evaluate("1 + 2", new Environment());
@@ -135,6 +166,22 @@ test("evaluates parenthesized repeated negation", () => {
     type: "Integer",
     value: 5,
   });
+});
+
+test("reports an unsupported unary operator defensively", () => {
+  const probe = new OperatorProbe(new Environment());
+  assert.throws(
+    () => probe.evaluateUnsupportedUnary(),
+    /Unsupported unary operator '\+'/,
+  );
+  assert.throws(
+    () => probe.evaluateUnsupportedBinary(),
+    /Unsupported binary operator '\('/,
+  );
+  assert.throws(
+    () => probe.evaluateUnsupportedOrdering(),
+    /Unsupported ordering operator '\('/,
+  );
 });
 test("respects multiplication precedence", () => {
   const result = evaluate("1 + 2 * 3", new Environment());
