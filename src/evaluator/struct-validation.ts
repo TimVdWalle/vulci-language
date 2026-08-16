@@ -1,4 +1,4 @@
-// Phase 16
+// Phase 17
 
 import {
   Expression,
@@ -198,6 +198,21 @@ function findExpressionConflict(
 
     case "MemberAccess":
       return findExpressionConflict(expression.receiver, structNames);
+
+    case "EachExpression": {
+      const binding = expression.bindings.find((candidate) =>
+        structNames.has(candidate.name.lexeme),
+      );
+
+      if (binding !== undefined) {
+        return { name: binding.name.lexeme, token: binding.name };
+      }
+
+      return (
+        findExpressionConflict(expression.receiver, structNames) ??
+        findExpressionListConflict(expression.expressions, structNames)
+      );
+    }
 
     case "IndexExpression":
       return (

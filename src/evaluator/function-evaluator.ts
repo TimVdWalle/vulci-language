@@ -1,4 +1,4 @@
-// Phase 16
+// Phase 17
 
 import {
   EnumDeclaration,
@@ -77,6 +77,20 @@ export abstract class FunctionEvaluator extends CallExecutor {
           value,
         })),
       });
+    }
+
+    const eachValue = this.eachBindingValue(expression.callee);
+
+    if (eachValue !== undefined) {
+      if (eachValue.type === "NativeFunction") {
+        return this.callNativeFunction(eachValue, expression);
+      }
+
+      throw new Error(
+        `Cannot call '${expression.callee}': value is not a function. at ` +
+          `${expression.calleeToken.line}:` +
+          `${expression.calleeToken.column}`,
+      );
     }
 
     const localValue = this.findValue(

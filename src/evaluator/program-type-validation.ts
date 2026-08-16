@@ -1,4 +1,4 @@
-// Phase 16
+// Phase 17
 
 import {
   Expression,
@@ -98,6 +98,15 @@ function collectExpressionTypeAnnotations(
 
     case "MemberAccess":
       return collectExpressionTypeAnnotations(expression.receiver);
+
+    case "EachExpression":
+      return [
+        ...collectExpressionTypeAnnotations(expression.receiver),
+        ...expression.bindings.flatMap((binding) =>
+          binding.bindingType === null ? [] : [binding.bindingType],
+        ),
+        ...expression.expressions.flatMap(collectExpressionTypeAnnotations),
+      ];
 
     case "IndexExpression":
       return [

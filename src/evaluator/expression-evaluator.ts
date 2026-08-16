@@ -1,4 +1,4 @@
-// Phase 16
+// Phase 17
 
 import {
   ConditionalExpression,
@@ -109,6 +109,9 @@ export abstract class ExpressionEvaluator extends FunctionEvaluator {
       case "MemberCall":
         return this.evaluateMemberCall(expression);
 
+      case "EachExpression":
+        return this.evaluateEachExpression(expression);
+
       case "IndexExpression":
         return this.evaluateIndexExpression(expression);
 
@@ -191,6 +194,21 @@ export abstract class ExpressionEvaluator extends FunctionEvaluator {
 
     if (expression.name.startsWith("$")) {
       return this.environment.get(expression.name);
+    }
+
+    const eachValue = this.eachBindingValue(expression.name);
+    if (eachValue !== undefined) {
+      if (eachValue.type === "NativeFunction") {
+        return this.callNativeFunction(eachValue, {
+          type: "FunctionCall",
+          callee: expression.name,
+          calleeToken: expression.token,
+          arguments: [],
+          argumentNames: [],
+        });
+      }
+
+      return eachValue;
     }
 
     const localValue = this.findValue(this.currentEnvironment, expression.name);

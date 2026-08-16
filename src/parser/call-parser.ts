@@ -1,20 +1,32 @@
-// Phase 16
+// Phase 17
 
-import { Expression, FunctionCall, MemberAccess, MemberCall } from "../ast.js";
+import {
+  EachExpression,
+  Expression,
+  FunctionCall,
+  MemberAccess,
+  MemberCall,
+} from "../ast.js";
 import { Token, TokenType } from "../token.js";
-import { CollectionLiteralParser } from "./collection-literal-parser.js";
+import { EachParser } from "./each-parser.js";
 
 interface ParsedArguments {
   arguments: Expression[];
   argumentNames: (Token | null)[];
 }
 
-export abstract class CallParser extends CollectionLiteralParser {
-  protected finishMember(receiver: Expression): MemberAccess | MemberCall {
+export abstract class CallParser extends EachParser {
+  protected finishMember(
+    receiver: Expression,
+  ): MemberAccess | MemberCall | EachExpression {
     const member = this.consume(
       TokenType.Identifier,
       "Expected member name after '.'.",
     );
+
+    if (member.lexeme === "each") {
+      return this.finishEachExpression(receiver, member);
+    }
 
     if (!this.match(TokenType.LeftParen)) {
       return { type: "MemberAccess", receiver, member };
@@ -85,6 +97,11 @@ export abstract class CallParser extends CollectionLiteralParser {
         );
       case "MemberAccess":
         return this.containsAssignment(expression.receiver);
+      case "EachExpression":
+        return (
+          this.containsAssignment(expression.receiver) ||
+          expression.expressions.some((item) => this.containsAssignment(item))
+        );
       case "IndexExpression":
         return (
           this.containsAssignment(expression.target) ||
