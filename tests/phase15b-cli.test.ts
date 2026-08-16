@@ -17,6 +17,7 @@ import {
   shouldUseColor,
 } from "../src/cli-output.js";
 import { Lexer } from "../src/lexer.js";
+import { TokenType } from "../src/token.js";
 import { VULCI_VERSION } from "../src/version.js";
 
 const projectRoot = path.resolve(
@@ -102,6 +103,42 @@ test("prints consistent token and AST debug output", () => {
   assert.match(result.stdout, /^AST$/m);
   assert.match(result.stdout, /type: 'Program'/);
   assert.equal(result.stdout.includes("\u001B["), false);
+});
+
+test("formats unknown and over-wide token rows defensively", () => {
+  const style = createCliStyle(false);
+
+  assert.match(
+    formatTokens(
+      [{ type: -1 as TokenType, lexeme: "?", line: 1, column: 1 }],
+      style,
+    ),
+    /Unknown/,
+  );
+
+  const overWideTokens: Parameters<typeof formatTokens>[0] = [];
+  overWideTokens.map = (() => [
+    ["Integer", "1", "1", "1", "extra"],
+  ]) as unknown as typeof overWideTokens.map;
+  assert.match(
+    formatTokens(overWideTokens, style),
+    /Integer\s+1\s+1\s+1\s+extra/,
+  );
+  assert.throws(
+    () =>
+      formatTokens(
+        [
+          {
+            type: TokenType.Integer,
+            lexeme: undefined as unknown as string,
+            line: 1,
+            column: 1,
+          },
+        ],
+        style,
+      ),
+    TypeError,
+  );
 });
 
 test("parses options independently from their order", () => {

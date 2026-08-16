@@ -91,9 +91,25 @@ test("rejects missing formula arguments and malformed checksums", () => {
     path.join(os.tmpdir(), "vulci-homebrew-test-"),
   );
   const invalidChecksumPath = path.join(temporaryDirectory, "invalid.sha256");
+  const missingTokenPath = path.join(
+    temporaryDirectory,
+    "missing-token.sha256",
+  );
+  const splitOverridePath = path.join(temporaryDirectory, "split-override.cjs");
 
   try {
     writeFileSync(invalidChecksumPath, "not-a-checksum\n");
+    writeFileSync(missingTokenPath, "missing-checksum-token\n");
+    writeFileSync(
+      splitOverridePath,
+      `// Phase: Phase 15B CLI, distribution, and quality hardening
+const originalSplit = String.prototype.split;
+String.prototype.split = function (separator, limit) {
+  if (String(this) === "missing-checksum-token") return [];
+  return originalSplit.call(this, separator, limit);
+};
+`,
+    );
 
     const missing = runScript(formulaGenerator);
     const malformed = runScript(
@@ -104,11 +120,27 @@ test("rejects missing formula arguments and malformed checksums", () => {
       invalidChecksumPath,
       invalidChecksumPath,
     );
+    const missingToken = spawnSync(
+      process.execPath,
+      [
+        "--require",
+        splitOverridePath,
+        formulaGenerator,
+        path.join(temporaryDirectory, "tap"),
+        "TimVdWalle/vulci-language",
+        "0.16.0",
+        missingTokenPath,
+        missingTokenPath,
+      ],
+      { cwd: projectRoot, encoding: "utf8" },
+    );
 
     assert.notEqual(missing.status, 0);
     assert.match(missing.stderr, /Usage: generate-homebrew-formula/);
     assert.notEqual(malformed.status, 0);
     assert.match(malformed.stderr, /Invalid SHA-256 checksum/);
+    assert.notEqual(missingToken.status, 0);
+    assert.match(missingToken.stderr, /Invalid SHA-256 checksum/);
   } finally {
     rmSync(temporaryDirectory, { force: true, recursive: true });
   }

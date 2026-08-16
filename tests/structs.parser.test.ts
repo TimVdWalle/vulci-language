@@ -51,6 +51,7 @@ Wrapper(value: Empty())`);
   if (wrapper.type !== "StructDeclaration") return;
   assert.equal(wrapper.fields[0]?.fieldType.members[0]?.lexeme, "Empty");
   assert.equal(construction.type, "StructConstruction");
+  assert.doesNotThrow(() => parse("struct Compact { int value }"));
 });
 
 test("accepts struct types in unions, tuples, parameters, and returns", () => {
@@ -136,6 +137,10 @@ test("rejects duplicate field and method member names", () => {
 
 test("rejects positional and duplicate construction fields", () => {
   assert.throws(
+    () => parse("struct Value {}\nValue(, field: 1)"),
+    /Expected struct field before ','/,
+  );
+  assert.throws(
     () =>
       parse(`struct User {
   str name
@@ -156,6 +161,10 @@ User(name: "A", name: "B")`),
 test("rejects malformed struct declarations", () => {
   assert.throws(() => parse("struct {}"), /Expected struct name/);
   assert.throws(() => parse("struct User"), /Expected '\{'/);
+  assert.throws(
+    () => parse("struct User { |int value }"),
+    /A union type cannot start with '\|'/,
+  );
   assert.throws(() => parse("struct User {\n  int\n}"), /Expected field name/);
   assert.throws(
     () => parse("struct User {\n  int x int y\n}"),

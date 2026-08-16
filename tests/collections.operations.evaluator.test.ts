@@ -2,6 +2,9 @@
 
 import assert from "node:assert/strict";
 import test from "node:test";
+import { registerBuiltins } from "../src/builtins.js";
+import { Environment } from "../src/environment.js";
+import { NULL_VALUE } from "../src/runtime-value.js";
 import {
   evaluateCollectionSource as evaluate,
   evaluateCollectionSourceWithBuiltins as evaluateWithBuiltins,
@@ -190,6 +193,44 @@ test("prints deterministic concrete collection forms with escaped strings", () =
   assert.deepEqual(output, [
     'list[1, set[2, 1], map["x": list["a\\n\\t\\r\\\\\\""]]]',
   ]);
+});
+
+test("prints a false Boolean value", () => {
+  const output: unknown[][] = [];
+  const originalLog = console.log;
+  console.log = (...values: unknown[]) => output.push(values);
+
+  try {
+    evaluateWithBuiltins("print(false)");
+  } finally {
+    console.log = originalLog;
+  }
+
+  assert.deepEqual(output, [["false"]]);
+});
+
+test("prints native functions nested in runtime collections", () => {
+  const environment = new Environment();
+  const output: unknown[][] = [];
+  const originalLog = console.log;
+  environment.define("provide", {
+    type: "NativeFunction",
+    parameters: [],
+    call: () => ({
+      type: "List",
+      items: [{ type: "NativeFunction", call: () => NULL_VALUE }],
+    }),
+  });
+  registerBuiltins(environment);
+  console.log = (...values: unknown[]) => output.push(values);
+
+  try {
+    evaluate("print(provide())", environment);
+  } finally {
+    console.log = originalLog;
+  }
+
+  assert.deepEqual(output, [["list[]"]]);
 });
 
 function integer(value: number) {

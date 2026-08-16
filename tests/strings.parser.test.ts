@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { Lexer } from "../src/lexer.js";
 import { Parser } from "../src/parser.js";
+import { parseStringLiteral } from "../src/parser/string-parser.js";
 
 function parseExpression(source: string) {
   return new Parser(new Lexer(source).lex()).parse().statements[0]?.expression;
@@ -19,6 +20,13 @@ test("parses interpolated strings as expression segments", () => {
   }
 
   assert.equal(expression.segments[1]?.type, "Interpolation");
+});
+
+test("parses a string token without pre-scanned segments", () => {
+  const token = new Lexer('""').lex()[0]!;
+  delete token.stringSegments;
+
+  assert.deepEqual(parseStringLiteral(token).segments, []);
 });
 
 test("parses string member calls", () => {

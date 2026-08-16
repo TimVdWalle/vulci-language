@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { Environment } from "../src/environment.js";
 import { Evaluator } from "../src/evaluator.js";
+import { runtimeValuesEqual } from "../src/evaluator/runtime-equality.js";
 import { Lexer } from "../src/lexer.js";
 import { Parser } from "../src/parser.js";
 import { RuntimeValue } from "../src/runtime-value.js";
@@ -44,6 +45,20 @@ test("treats cross-runtime-type tuple members as unequal", () => {
     type: "Boolean",
     value: false,
   });
+  assert.equal(
+    runtimeValuesEqual({ type: "Tuple", members: [] }, { type: "Null" }),
+    false,
+  );
+  let typeReads = 0;
+  const unstableType = {
+    get type() {
+      return ++typeReads === 1 ? "Tuple" : "Null";
+    },
+  } as unknown as RuntimeValue;
+  assert.equal(
+    runtimeValuesEqual({ type: "Tuple", members: [] }, unstableType),
+    false,
+  );
 });
 
 test("compares unsupported value kinds successfully across runtime types", () => {

@@ -221,6 +221,7 @@ test("parses trailing commas in argument lists", () => {
 });
 
 test("rejects positional arguments after named arguments", () => {
+  assert.throws(() => parse("calculate(,)"), /Expected argument before ','/);
   assert.throws(
     () => parse("calculate(left: 10, 20)"),
     /Positional arguments cannot follow named arguments\./,

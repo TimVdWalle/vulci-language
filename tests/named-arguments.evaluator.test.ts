@@ -338,6 +338,43 @@ test("supports named arguments for native functions", () => {
   });
 });
 
+test("reports incomplete native-function parameter metadata", () => {
+  const environment = new Environment();
+  environment.define("legacy", {
+    type: "NativeFunction",
+    call: () => NULL_VALUE,
+  });
+  assert.throws(
+    () => evaluate("legacy(value: 1)", environment),
+    /does not declare named parameters/,
+  );
+  environment.define("optional", {
+    type: "NativeFunction",
+    parameters: [{ name: "value", required: false }],
+    call: () => NULL_VALUE,
+  });
+  assert.throws(
+    () => evaluate("optional()", environment),
+    /has no value for parameter 'value'/,
+  );
+});
+
+test("reports incomplete user-function default metadata", () => {
+  const program = new Parser(
+    new Lexer(`fn identity(value = 1) { value }
+identity()`).lex(),
+  ).parse();
+  const declaration = program.statements[0];
+  assert.equal(declaration?.type, "ExpressionStatement");
+  assert.equal(declaration.expression.type, "FunctionDeclaration");
+  if (declaration.expression.type !== "FunctionDeclaration") assert.fail();
+  declaration.expression.parameterDefaults = [];
+  assert.throws(
+    () => new Evaluator(new Environment()).evaluate(program),
+    /Function 'identity' is missing required argument 'value'/,
+  );
+});
+
 test("supports bare zero-argument function calls", () => {
   assert.deepEqual(
     evaluate(`fn answer() {

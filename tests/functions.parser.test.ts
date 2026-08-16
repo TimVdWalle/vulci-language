@@ -6,6 +6,12 @@ import { Lexer } from "../src/lexer.js";
 import { Parser } from "../src/parser.js";
 import { TokenType } from "../src/token.js";
 
+class ParserStateProbe extends Parser {
+  public nextToken() {
+    return this.peek();
+  }
+}
+
 function parse(source: string) {
   return new Parser(new Lexer(source).lex()).parse();
 }
@@ -451,6 +457,14 @@ test("rejects a missing function name", () => {
 }`),
     /function name|identifier/i,
   );
+  assert.throws(
+    () => parse("fn $invalid() returns null { null }"),
+    /Function names cannot be global identifiers/,
+  );
+  assert.throws(
+    () => parse("fn invalid($value) returns null { null }"),
+    /Function parameters cannot be global identifiers/,
+  );
 });
 
 test("rejects a missing opening parenthesis", () => {
@@ -470,6 +484,17 @@ test("rejects a missing closing parenthesis", () => {
   return value
 }`),
     /'\)'|closing parenthesis/i,
+  );
+  assert.throws(
+    () => parse("fn invalid(,) returns null { null }"),
+    /Expected parameter before ','/,
+  );
+});
+
+test("reports a truncated parser token stream", () => {
+  assert.throws(
+    () => new ParserStateProbe([]).nextToken(),
+    /Parser reached the end of the token stream/,
   );
 });
 

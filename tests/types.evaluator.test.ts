@@ -49,6 +49,36 @@ test("rejects an argument with the wrong type", () => {
 double(true)`),
     /Function 'double' parameter 'value' expects int, but received boolean\./,
   );
+  assert.throws(
+    () =>
+      evaluateWithoutWarnings(`struct Box {}
+fn requireInt(int value) returns int { value }
+requireInt(Box())`),
+    /expects int, but received Box/,
+  );
+});
+
+test("accepts a bare set annotation", () => {
+  assert.deepEqual(
+    evaluateWithoutWarnings(
+      "fn preserve(set value) returns set { value }\npreserve(set[1])",
+    ),
+    { type: "Set", items: [{ type: "Integer", value: 1 }] },
+  );
+  assert.deepEqual(
+    evaluateWithoutWarnings(
+      'fn preserve(map value) returns map { value }\npreserve(map["key": 1])',
+    ),
+    {
+      type: "Map",
+      entries: [
+        {
+          key: { type: "String", value: "key" },
+          value: { type: "Integer", value: 1 },
+        },
+      ],
+    },
+  );
 });
 
 test("accepts each member of a parameter union", () => {

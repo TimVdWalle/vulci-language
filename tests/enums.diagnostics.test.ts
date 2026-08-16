@@ -3,6 +3,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { Environment } from "../src/environment.js";
+import { Evaluator } from "../src/evaluator.js";
+import { findEnumBindingConflict } from "../src/evaluator/enum-validation.js";
 import {
   evaluateEnumSource as evaluate,
   evaluateEnumSourceWithBuiltins as evaluateWithBuiltins,
@@ -50,6 +52,13 @@ enum Status {
   assert.throws(
     () => evaluate("enum Status {\n  Pending\n}", environment),
     /E_ENUM_DUP/,
+  );
+
+  const evaluator = new Evaluator(new Environment());
+  evaluator.evaluate(parse("enum Existing {\n  Value\n}"));
+  assert.throws(
+    () => evaluator.evaluate(parse("fn Existing() returns null { null }")),
+    /already defined as an enum/,
   );
 });
 
@@ -101,6 +110,42 @@ fn invalid() returns int {
 }`),
     /E_ENUM_DUP/,
   );
+  assert.throws(
+    () =>
+      evaluate(`enum Status { Pending }
+fn invalid() returns int {
+  if (true) { Status = 1 }
+  1
+}`),
+    /E_ENUM_DUP/,
+  );
+  assert.throws(
+    () =>
+      evaluate(`enum Status { Pending }
+struct Box {
+  fn invalid() returns int { Status = 1 }
+}`),
+    /E_ENUM_DUP/,
+  );
+
+  const defaultProgram = parse(
+    "fn invalid(any value = 1) returns any { value }",
+  );
+  const defaultDeclaration = defaultProgram.statements[0];
+  assert.equal(defaultDeclaration?.type, "ExpressionStatement");
+  assert.equal(defaultDeclaration.expression.type, "FunctionDeclaration");
+  if (defaultDeclaration.expression.type !== "FunctionDeclaration") {
+    assert.fail();
+  }
+  defaultDeclaration.expression.parameterDefaults[0] = {
+    type: "AssignmentExpression",
+    name: "Status",
+    value: { type: "IntegerLiteral", value: 1 },
+  };
+  assert.equal(
+    findEnumBindingConflict(defaultProgram, new Set(["Status"]))?.name,
+    "Status",
+  );
 });
 
 test("keeps dollar-prefixed globals distinct from enum names", () => {
@@ -117,6 +162,17 @@ Status.Pending`),
 test("reports duplicate members with E_ENUM_MEMBER_DUP", () => {
   assert.throws(
     () => parse("enum Status {\n  Pending\n  Pending\n}"),
+    /E_ENUM_MEMBER_DUP/,
+  );
+
+  const program = parse("enum Status { Pending }");
+  const statement = program.statements[0];
+  assert.equal(statement?.type, "ExpressionStatement");
+  assert.equal(statement.expression.type, "EnumDeclaration");
+  if (statement.expression.type !== "EnumDeclaration") assert.fail();
+  statement.expression.members.push(statement.expression.members[0]!);
+  assert.throws(
+    () => new Evaluator(new Environment()).evaluate(program),
     /E_ENUM_MEMBER_DUP/,
   );
 });

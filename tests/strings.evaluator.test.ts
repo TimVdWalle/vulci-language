@@ -28,10 +28,10 @@ test("evaluates string concatenation and space joining", () => {
 
 test("evaluates interpolation left to right", () => {
   assert.deepEqual(
-    evaluate('$name = "Ada"\n"Hi {{$name}}, {{1 + 2}}, {{true}}"'),
+    evaluate('$name = "Ada"\n"Hi {{$name}}, {{1 + 2}}, {{true}}, {{false}}"'),
     {
       type: "String",
-      value: "Hi Ada, 3, true",
+      value: "Hi Ada, 3, true, false",
     },
   );
 });
@@ -59,6 +59,10 @@ test("evaluates string contains", () => {
   assert.deepEqual(evaluate('"Hello".contains("ell")'), {
     type: "Boolean",
     value: true,
+  });
+  assert.deepEqual(evaluate('"Hello".contains("missing")'), {
+    type: "Boolean",
+    value: false,
   });
 });
 
@@ -90,7 +94,15 @@ test("reports member diagnostics", () => {
   assert.throws(() => evaluate("1.count()"), /E_MEM_TYPE:/);
   assert.throws(() => evaluate('"x".missing()'), /E_MEM_UNKNOWN:/);
   assert.throws(() => evaluate('"x".count(1)'), /E_ARG_COUNT:/);
+  assert.throws(
+    () => evaluate('"x".contains()'),
+    /expects 1 argument, but received 0/,
+  );
   assert.throws(() => evaluate('"x".contains(1)'), /E_ARG_TYPE:/);
+  assert.throws(
+    () => evaluate('"x".contains(other: "x")'),
+    /has no parameter named 'other'/,
+  );
 });
 
 test("accepts str parameter and return annotations", () => {
