@@ -1,13 +1,24 @@
-<!-- Phase: Phase 15 pre-collections language improvements -->
+<!-- Phase: Phase 17 collection iteration -->
 <!-- Document ID: semantics-general -->
-<!-- Version: 25 -->
+<!-- Version: 26 -->
 <!-- Status: Active -->
 <!-- Authority: Accepted non-collection-specific Vulci semantics -->
-<!-- Supersedes: semantics-general v24 -->
+<!-- Supersedes: semantics-general v25 -->
 
 # Programming Language Semantics Specification
 
 This document owns accepted general Vulci semantics. String and collection semantics are owned by the Collection Semantics Specification. Syntax and implementation mechanics are outside this document's authority.
+
+---
+
+# Expression-Oriented Evaluation
+
+Every executable Vulci construct evaluates to a value. When no more specific
+accepted rule defines a construct's result, that construct currently evaluates
+to `null`. A more specific result rule, such as a conditional branch value or a
+collection `each` result, takes precedence.
+
+Evaluating to a value does not change a construct's accepted syntactic placement.
 
 ---
 

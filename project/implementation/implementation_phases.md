@@ -1,9 +1,9 @@
-<!-- Phase: Phase 16 collections -->
+<!-- Phase: Phase 17 collection iteration -->
 <!-- Document ID: implementation-phases -->
-<!-- Version: 20 -->
+<!-- Version: 21 -->
 <!-- Status: Active -->
 <!-- Authority: Implementation order, phase scope, dependencies, and completion criteria -->
-<!-- Supersedes: implementation-phases v19 -->
+<!-- Supersedes: implementation-phases v20 -->
 
 # Implementation Phases
 
@@ -420,13 +420,31 @@ coverage before collection work begins.
 
 ## `ph17` Collection iteration — Core
 
-**Design-blocked:** Exact `each` collection-expression, item-binding, and remaining
-loop semantics must be agreed first.
-
 - `col01` Language-level `each` loop
-- Brace-delimited loop body
-- Execute the body once for every traversed item
+- Receiver-attached, expression-oriented `.each(...) { ... }` form with required
+  parentheses and braces
+- Normal expression receivers, including preceding and following operation chains
+- `str`, `list`, `set`, and `map` receivers, with future receiver expansion left open
+- Exactly-once receiver evaluation and `E_MEM_TYPE` for an ineligible receiver
+- Brace-delimited loop body, including an empty body
+- Execute the body once for every traversed item in the evaluated receiver's
+  defined traversal order
+- One item binding for strings, lists, and sets; map value binding with an
+  optional following key binding
+- Optional independently typed bindings with pre-body validation and normal
+  typed-binding reassignment restrictions
+- Normal runtime assignment semantics for bound values, without special deep
+  copying or receiver mutation through binding reassignment
+- Loop-local item and key bindings, no binding shadowing, top-level temporary
+  bindings without `$`, and no general scope created by the body
+- Return the unchanged receiver after normal completion and permit later chaining
+- Propagate `return` and runtime errors immediately; do not introduce `break` or
+  `continue` in this phase
+- Ordinary nested `each` expressions with distinct binding names; no contextual
+  loop metadata or advanced nested-loop behaviour
 - No lambda or function-value dependency
+- Lexer, parser, AST, evaluator, type-validation, diagnostic, regression,
+  coverage, and smoke tests for the accepted Phase 17 behaviour
 
 **Result:** Collections can be processed with a language-level loop.
 

@@ -1,9 +1,9 @@
-<!-- Phase: Phase 16 collections -->
+<!-- Phase: Phase 17 collection iteration -->
 <!-- Document ID: syntax-collections -->
-<!-- Version: 11 -->
+<!-- Version: 12 -->
 <!-- Status: Active -->
 <!-- Authority: Accepted string- and collection-specific Vulci syntax -->
-<!-- Supersedes: syntax-collections v10 -->
+<!-- Supersedes: syntax-collections v11 -->
 
 # Vulci Collection Syntax Specification
 
@@ -167,17 +167,83 @@ the Collection Semantics Specification.
 
 `each` is a language-level collection loop, not a callback operation.
 
-It uses a brace-delimited executable body, like conditional expressions. The body
-is executed once for every traversed item.
+It is a receiver-attached expression with a parenthesized binding list and a
+brace-delimited executable body.
 
 ```text
-each ... {
-    ...
+items.each(item) {
+    print(item)
 }
 ```
 
-The exact collection-expression and item-binding syntax is not yet accepted; see
-`dec-col-syn-001` in the Decision Register.
+The receiver before `.each` may be any normal expression, including a method
+chain. `.each` returns a value under the Collection Semantics Specification, so
+further operations may be chained after its body.
+
+```text
+items.add(4).each(item) {
+    print(item)
+}.count()
+```
+
+The receiver expression, parentheses, and braces are required. Prefix forms such
+as `each items ...` are invalid. The parenthesized forms declare loop bindings;
+they do not accept callback expressions or function values.
+
+A string, list, or set form declares exactly one item binding.
+
+```text
+text.each(grapheme) {
+    print(grapheme)
+}
+
+items.each(item) {
+    print(item)
+}
+```
+
+A map form declares either its value binding or its value binding followed by
+its key binding. Value comes first.
+
+```text
+lookup.each(value) {
+    print(value)
+}
+
+lookup.each(value, key) {
+    print(key)
+    print(value)
+}
+```
+
+Every binding is an ordinary unprefixed identifier and may independently include
+an optional type before its name. Any otherwise accepted Vulci type form may be
+used. This is a collection-loop-specific exception to the rule that ordinary
+local variables do not declare types.
+
+```text
+items.each(int item) {
+    print(item)
+}
+
+lookup.each(int value, str key) {
+    print(value)
+}
+```
+
+At least one binding is required. Binding expressions, `$`-prefixed bindings,
+and destructuring bindings are invalid.
+
+An `each` body may be empty.
+
+```text
+items.each(item) {
+}
+```
+
+`each` may appear anywhere its complete expression is permitted, including in
+another `each` body. Nested forms use distinct binding names under the Collection
+Semantics Specification.
 
 ---
 

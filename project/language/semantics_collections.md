@@ -1,9 +1,9 @@
-<!-- Phase: Phase 16 collections -->
+<!-- Phase: Phase 17 collection iteration -->
 <!-- Document ID: semantics-collections -->
-<!-- Version: 12 -->
+<!-- Version: 13 -->
 <!-- Status: Active -->
 <!-- Authority: Accepted string and collection semantics -->
-<!-- Supersedes: semantics-collections v11 -->
+<!-- Supersedes: semantics-collections v12 -->
 
 # Collection Semantics Specification
 
@@ -538,15 +538,118 @@ Safe-access design remains deferred.
 
 `each` is a language-level loop over a collection-capable value.
 
-Its brace-delimited body executes once for every traversed item. Traversal order
-follows the ordering guarantees of the traversed value.
-
 `each` is not a callback operation and does not depend on lambdas or function
 values.
 
-The exact item-binding rules, map key/value binding rules, result value, and
-early-termination behaviour are not yet accepted; see `dec-col-sem-001` in the
-Decision Register.
+## Receiver Evaluation and Eligibility
+
+The receiver expression is evaluated exactly once before receiver validation or
+traversal. The resulting value is both the value traversed and, after normal
+completion, the result of the `each` expression. If receiver evaluation fails,
+no binding or body execution occurs.
+
+`each` currently accepts every value matched by the broad `collection` type and
+also accepts `str`. Its current receiver types are therefore `list`, `set`,
+`map`, and `str`. Additional receiver types may be accepted in the future, but no
+other type is currently eligible.
+
+An ineligible receiver produces `E_MEM_TYPE`. No binding or body execution and
+no later operation chained after `each` occurs.
+
+## Traversal and Bound Values
+
+The body executes once for every traversed item. Traversal uses the evaluated
+receiver's defined traversal order. Operations evaluated as part of the receiver
+may therefore determine a different traversal order before `each` begins; `each`
+does not claim the receiver's original construction or insertion order beyond
+the ordering guarantees of that evaluated value.
+
+The bound values are:
+
+- `str`: each Unicode grapheme cluster as an ordinary `str`, in string order;
+- `list`: each item in list order;
+- `set`: each member in the set's defined traversal order;
+- `map`: each value, optionally followed by its key, in the map's defined
+  traversal order.
+
+A one-binding map form binds the value. A two-binding map form binds value first
+and key second.
+
+An empty receiver performs zero body executions.
+
+## Binding Values and Types
+
+Before each body execution, the item and optional key bindings receive the
+current values according to those values' normal runtime assignment semantics.
+`each` does not introduce special deep-copying. Value-semantic values therefore
+remain independent values, while future reference-semantic values retain their
+normal reference semantics.
+
+Reassigning an item or key binding changes only that loop binding for the current
+iteration. It does not replace or otherwise mutate the value stored in the
+receiver.
+
+An untyped binding is unrestricted and emits no warning. An explicitly typed
+binding is validated against the current item or key before that iteration's body
+executes. On a mismatch, that body execution, all later iterations, and later
+chained operations do not occur; the runtime type error propagates normally.
+
+Reassignment of an explicitly typed binding follows the accepted typed-parameter
+reassignment rules. Each map binding is validated independently when typed.
+
+## Binding Scope and Lifetime
+
+Item and key bindings are visible only inside their `each` body. They are
+populated with the current values before every body execution and do not exist in
+the receiver expression or after the `each` expression. These rules do not decide
+future closure-capture identity.
+
+An item or key binding may not reuse the name of an already-visible unprefixed
+local variable, parameter, or enclosing loop binding. Duplicate names in a map's
+two-binding form are therefore invalid. A `$`-prefixed global and an unprefixed
+loop binding remain distinct identifiers.
+
+At the top level, an unprefixed item or key name is valid because it is a
+temporary loop binding, not a global variable.
+
+The `each` body does not create a general variable scope. Assignments other than
+the declared item and key bindings follow the existing scope rules. Inside a
+function or method, they may therefore create or update surrounding local
+variables. At the top level, ordinary variable assignment still requires a
+`$`-prefixed global name.
+
+## Result and Chaining
+
+After normal completion, `each` evaluates to its unchanged receiver value. The
+result of each individual body execution is discarded. The same receiver result
+is produced for an empty receiver and for an empty body.
+
+Because `each` produces its receiver, it is not terminal: later operations may be
+chained after its body.
+
+If evaluation exits through `return` or a runtime error, the `each` expression
+does not complete normally and no later chained operation executes.
+
+## Control Flow
+
+A `return` executed inside an `each` body immediately exits the enclosing
+function or method under the ordinary return rules. Remaining iterations are not
+executed. `return` at the top level remains invalid.
+
+A runtime error in the body immediately stops traversal and propagates normally.
+
+Phase 17 does not accept `break` or `continue`. Those controls remain invalid and
+may be designed consistently with general loops in a later phase.
+
+## Nested `each`
+
+An `each` body may contain another `each` expression. Every nested expression
+follows the same receiver, traversal, binding, result, and control-flow rules
+independently. Because binding shadowing is invalid, nested loops use distinct
+binding names.
+
+Contextual loop metadata such as an iteration index, loop depth, or parent-loop
+reference is not accepted. Advanced nested-loop behaviour remains deferred.
 
 ---
 
