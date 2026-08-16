@@ -1,4 +1,4 @@
-// Phase 14
+// Phase 17
 
 import { Environment } from "../environment.js";
 import { RuntimeValue } from "../runtime-value.js";
@@ -35,6 +35,24 @@ export abstract class ScopeResolver extends TypeChecker {
     }
 
     const assignedValue = copyRuntimeValue(value);
+    const eachBinding = this.eachBindingScope().get(name);
+
+    if (eachBinding !== undefined) {
+      if (
+        eachBinding.bindingType !== null &&
+        !this.valueMatchesType(assignedValue, eachBinding.bindingType)
+      ) {
+        throw new Error(
+          `Cannot assign ${this.runtimeTypeName(assignedValue)} to each ` +
+            `binding '${name}': expected ` +
+            `${this.typeAnnotationName(eachBinding.bindingType)}. at ` +
+            `${eachBinding.name.line}:${eachBinding.name.column}`,
+        );
+      }
+
+      this.defineEachBindingValue(name, assignedValue);
+      return;
+    }
 
     if (name.startsWith("$")) {
       if (

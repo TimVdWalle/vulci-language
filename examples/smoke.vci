@@ -1,8 +1,8 @@
-// Phase 16
+// Phase 17
 // Expected output: Phase13Counter(value: 15, step: 2)
 //                  Phase14Status.Running
 //                  map["items": list[1, 2, 3]]
-//                  SMOKE OK: 1369
+//                  SMOKE OK: 1386
 
 import 'phase15/imported.vci'
 
@@ -315,6 +315,31 @@ $phase16_score = if (
     and "á"[0] == "á"
 ) { 16 } else { 0 }
 print(value: $phase16_lookup)
+$phase17_total = 0
+list[8, 9].each(int item) {
+    $phase17_total = $phase17_total + item
+}
+$phase17_text = ""
+"áb".each(str grapheme) {
+    $phase17_text = $phase17_text + grapheme
+}
+$phase17_set_order = 0
+set[2, 1, 2].each(int item) {
+    $phase17_set_order = $phase17_set_order * 10 + item
+}
+$phase17_map_order = ""
+map["a": "A", "b": "B"].each(str value, str key) {
+    $phase17_map_order = $phase17_map_order + key + value
+}
+$phase17_chain = list[1].each(item) {
+}.add(2)
+$phase17_score = if (
+    $phase17_total == 17
+    and $phase17_text == "áb"
+    and $phase17_set_order == 21
+    and $phase17_map_order == "aAbB"
+    and $phase17_chain == list[1, 2]
+) { 17 } else { 0 }
 $result = $checksum
     + $existing_boolean_score
     + $existing_null_score
@@ -334,6 +359,7 @@ $result = $checksum
     + $phase14_score
     + $phase15_score
     + $phase16_score
+    + $phase17_score
 print(value: "SMOKE OK: {{$result}}")
 $unused_null = return_null()
 

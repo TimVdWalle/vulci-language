@@ -1,6 +1,7 @@
-// Phase 16
+// Phase 17
 
 import { Token } from "./token.js";
+import type { EachExpression } from "./each-ast.js";
 import type {
   CollectionLiteral,
   CollectionTypeMember,
@@ -14,6 +15,7 @@ export type {
   MapLiteralEntry,
   SetLiteral,
 } from "./collection-ast.js";
+export type { EachBinding, EachExpression } from "./each-ast.js";
 
 export interface Program {
   type: "Program";
@@ -50,6 +52,7 @@ export type Expression =
   | EnumDeclaration
   | FunctionCall
   | MemberCall
+  | EachExpression
   | MemberAccess
   | IndexExpression
   | ReturnExpression

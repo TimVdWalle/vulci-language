@@ -1,4 +1,4 @@
-// Phase 16
+// Phase 17
 
 import { IndexExpression, MemberCall } from "../ast.js";
 import { CollectionLiteral, MapLiteral } from "../collection-ast.js";
@@ -15,9 +15,9 @@ import {
 } from "../runtime-value.js";
 import { copyRuntimeValue } from "./value-copy.js";
 import { runtimeValuesEqual } from "./runtime-equality.js";
-import { StructEvaluator } from "./struct-evaluator.js";
+import { EachEvaluator } from "./each-evaluator.js";
 
-export abstract class CollectionEvaluator extends StructEvaluator {
+export abstract class CollectionEvaluator extends EachEvaluator {
   protected evaluateCollectionLiteral(
     expression: CollectionLiteral,
   ): ListValue | SetValue | MapValue {

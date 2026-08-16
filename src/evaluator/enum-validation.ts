@@ -1,4 +1,4 @@
-// Phase 16
+// Phase 17
 
 import { Expression, Program } from "../ast.js";
 import { Token } from "../token.js";
@@ -115,6 +115,21 @@ function findExpressionConflict(
 
     case "MemberAccess":
       return findExpressionConflict(expression.receiver, enumNames);
+
+    case "EachExpression": {
+      const binding = expression.bindings.find((candidate) =>
+        enumNames.has(candidate.name.lexeme),
+      );
+
+      if (binding !== undefined) {
+        return { name: binding.name.lexeme, token: binding.name };
+      }
+
+      return (
+        findExpressionConflict(expression.receiver, enumNames) ??
+        findExpressionListConflict(expression.expressions, enumNames)
+      );
+    }
 
     case "IndexExpression":
       return (
