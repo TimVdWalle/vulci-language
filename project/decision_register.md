@@ -1,7 +1,7 @@
-<!-- Phase: Phase 16 collections -->
+<!-- Phase: Phase 17 collection iteration -->
 <!-- Document ID: decision-register -->
-<!-- Version: 12 -->
-<!-- Supersedes: decision-register v11 -->
+<!-- Version: 13 -->
+<!-- Supersedes: decision-register v12 -->
 <!-- Status: Active -->
 <!-- Authority: Status and history of non-accepted, rejected, deferred, and superseded design items -->
 
@@ -70,7 +70,7 @@ existing deferred match/switch and pattern-matching entries.
 
 # Collection syntax
 
-- `dec-col-syn-001` — Exact `each` collection-expression and item-binding syntax — **Undecided**
+- `dec-col-syn-001` — Exact `each` collection-expression and item-binding syntax — **Superseded** by the accepted receiver-attached, brace-delimited syntax and binding forms in the Collection Syntax Specification
 - `dec-col-syn-002` — Safe collection-access syntax — **Undecided**
 - `dec-col-syn-003` — Pattern-matching syntax for collection runtime types — **Deferred**
 - `dec-col-syn-004` — Capabilities-system syntax — **Deferred**
@@ -83,7 +83,7 @@ collection processing, but no replacement decision is accepted.
 
 # Collection semantics
 
-- `dec-col-sem-001` — Remaining `each` binding, result, map traversal, and early-termination semantics — **Undecided**
+- `dec-col-sem-001` — Remaining `each` binding, result, map traversal, and early-termination semantics — **Superseded** by the accepted `each` rules in the Collection Semantics Specification
 - `dec-col-sem-002` — Safe collection-access behaviour — **Undecided**
 - `dec-col-sem-003` — Explicit unrestricted `map` boundary type — **Superseded** by the accepted `map<any, any>`, `map<any, V>`, and `map<K, any>` forms
 - `dec-col-sem-004` — Collection conversion operations — **Undecided**
@@ -92,7 +92,7 @@ collection processing, but no replacement decision is accepted.
 - `dec-col-sem-007` — Exact `reduce()` semantics — **Deferred until `ph29` design**
 - `dec-col-sem-008` — Exact `group()` semantics — **Deferred until `ph30` design**
 - `dec-col-sem-009` — Exact `any()` and `all()` semantics — **Undecided**
-- `dec-col-sem-010` — Contextual loop metadata and nested-loop behaviour — **Deferred**
+- `dec-col-sem-010` — Contextual loop metadata and nested-loop behaviour — **Partially superseded** by accepted ordinary nested `each` expressions; contextual metadata and advanced nested-loop behaviour remain **Deferred**
 - `dec-col-sem-011` — Capabilities system details and boundary-type interaction — **Deferred**
 - `dec-col-sem-012` — User-defined collection-capable types — **Deferred**
 - `dec-col-sem-013` — Pattern-matching unmatched-case behaviour — **Deferred**

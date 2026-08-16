@@ -1,9 +1,9 @@
-<!-- Phase: Phase 16 collections -->
+<!-- Phase: Phase 17 collection iteration -->
 <!-- Document ID: syntax-general -->
-<!-- Version: 29 -->
+<!-- Version: 30 -->
 <!-- Status: Active -->
 <!-- Authority: Accepted non-collection-specific Vulci syntax -->
-<!-- Supersedes: syntax-general v28 -->
+<!-- Supersedes: syntax-general v29 -->
 
 # General Syntax Specification
 
@@ -24,6 +24,17 @@ if (...) {
     ...
 }
 ```
+
+---
+
+## Expression Orientation
+
+Every executable Vulci construct is an expression.
+
+This does not remove contextual placement restrictions. A construct that is
+top-level-only remains top-level-only even though it evaluates to a value.
+“Statement” describes an expression's placement or termination where that term
+is used; it does not define a separate non-value-producing construct category.
 
 ---
 
@@ -896,7 +907,10 @@ Reason: Names improve readability once calls become larger.
 
 ## Scope
 
-Control-flow constructs such as `if` and `for` do not create scopes.
+Control-flow bodies do not create general variable scopes. Explicit binding
+positions provided by a control-flow construct may have a narrower lifetime
+defined by that construct. Collection `each` binding scope is defined by the
+Collection Syntax and Collection Semantics Specifications.
 
 ---
 
