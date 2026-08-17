@@ -32,7 +32,9 @@
 
 ## Coverage
 
-- `cov1` — For every pull request, inspect the current coverage report. When source-code files relevant to that pull request's requested changes have a file-level coverage metric below `97%`, make a meaningful effort to improve the least-covered relevant file. Do not add unrelated coverage work; use meaningful tests and keep the effort proportionate to the pull request.
+- `cov1` — For every pull request, inspect the current coverage report and aim to keep every reported overall and file-level statement, branch, function, and line metric at `100%`. Do not allow coverage to regress.
+- `cov2` — Deviate from `100%` only in exceptional circumstances. Document the exact uncovered metric and path, why meaningful coverage is not currently feasible, and any required follow-up. Do not lower thresholds, exclude code, or use ignore directives merely to report `100%`.
+- `cov3` — Use meaningful tests and keep coverage work within the pull request's scope. The `100%` target does not justify unrelated refactors or tests without regression value.
 
 ## File size
 

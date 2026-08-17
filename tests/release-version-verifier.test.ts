@@ -84,6 +84,15 @@ test("reports command lookup failures and cross-file version mismatches", () => 
       ),
     /network failure/,
   );
+  assert.throws(
+    () =>
+      remoteRefExists(
+        () => ({ status: 1, stderr: "", stdout: "" }),
+        "--tags",
+        "refs/tags/v0.17.0",
+      ),
+    /Could not inspect remote refs\/tags\/v0\.17\.0/,
+  );
 
   const usage = spawnSync(
     process.execPath,
