@@ -101,7 +101,7 @@ test("reports an unsupported chained operator defensively", () => {
 
   assert.throws(
     () => new Evaluator(new Environment()).evaluate(program),
-    /Unsupported chained-comparison operator '\<'/,
+    /Unsupported chained-comparison operator '<'/,
   );
 });
 
