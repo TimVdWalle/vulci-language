@@ -84,7 +84,7 @@ jobs:
       contents: write
     steps:
       - name: Download executable artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           pattern: vulci-macos-*
           path: artifacts
@@ -123,7 +123,7 @@ jobs:
           node-version: 22
 
       - name: Download executable artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           pattern: vulci-macos-*
           path: artifacts
