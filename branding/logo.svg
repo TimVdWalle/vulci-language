@@ -1,0 +1,52 @@
+<!-- Phase: Brand identity exploration -->
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 300 260"
+     width="1200"
+     height="1040"
+     role="img"
+     aria-labelledby="title desc"
+     preserveAspectRatio="xMidYMid meet">
+  <title id="title">Vulci logo — concept 23</title>
+  <desc id="desc">Vector reconstruction of concept 23 from the original overview sheet, with generous transparent padding on every side.</desc>
+
+  <defs>
+    <linearGradient id="purple" gradientUnits="userSpaceOnUse" x1="58" y1="76" x2="142" y2="208">
+      <stop offset="0" stop-color="#A05AF7"/>
+      <stop offset="0.48" stop-color="#6C2DDB"/>
+      <stop offset="1" stop-color="#3E119C"/>
+    </linearGradient>
+    <linearGradient id="pink" gradientUnits="userSpaceOnUse" x1="224" y1="76" x2="140" y2="208">
+      <stop offset="0" stop-color="#F45CAC"/>
+      <stop offset="0.52" stop-color="#E33FAE"/>
+      <stop offset="1" stop-color="#B82CB4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Purple left swoosh -->
+  <path fill="url(#purple)" d="
+    M 56 77
+    C 57 76, 59 76.5, 62 78
+    C 82 89, 105 103, 128 116
+    C 134 119.5, 139 120, 145 116
+    C 137 124, 131 134, 128 145
+    C 124 159, 126 177, 132 190
+    C 136 199, 140 205, 142 208
+    C 139 210, 135 207, 130 201
+    C 126 196, 122 189, 117 181
+    L 57 82
+    C 55.5 79.5, 55 78.2, 56 77
+    Z"/>
+
+  <!-- Pink right swoosh -->
+  <path fill="url(#pink)" d="
+    M 223 76
+    C 225 75.5, 226 76.5, 225 78
+    C 210 103, 191 133, 171 164
+    C 158 184, 148 201, 142 208
+    C 138 207, 133 201, 130 193
+    C 125 181, 123.5 166, 126 152
+    C 128.5 137, 134 126, 143 118
+    C 156 106.5, 178 94.5, 221 77
+    C 221.8 76.5, 222.4 76.2, 223 76
+    Z"/>
+</svg>
