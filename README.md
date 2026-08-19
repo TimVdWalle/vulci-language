@@ -1,135 +1,195 @@
-<!-- Phase: Phase 15B CLI, distribution, and quality hardening -->
+<!-- Phase: Branding exploration after Phase 17 -->
 
-Vulci
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="branding/vulci-readme-banner-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="branding/vulci-readme-banner-light.png">
+  <img alt="Vulci is built around fewer concepts, clearer code, and a consistent way to work with data." src="branding/vulci-readme-banner-light.png">
+</picture>
 
-A general-purpose programming language designed from first principles.
+# Vulci
 
-Vulci is an attempt to build a programming language that genuinely deserves to exist.
+Vulci is built around fewer concepts, clearer code, and a consistent way to work with data.
 
-The goal is not to create another language with a different syntax, nor to experiment for experimentation’s sake. The goal is to design a language whose overall design provides enough value that experienced developers can justify choosing it over existing alternatives.
+Vulci aims to make programs easier to understand by combining a small set of
+consistent language features. Its central design goal is one mental model for
+working with data, regardless of whether that data comes from memory, files,
+databases, APIs, streams, or another source.
 
-Although Vulci is developed as a hobby project, it is designed with the ambition and discipline of a serious programming language. Development decisions may be pragmatic, but language design decisions are made as if Vulci were intended for long-term, real-world use.
+> [!IMPORTANT]
+> Vulci is a pre-1.0 language under active development. The current reference
+> interpreter implements the language through Phase 17 and is suitable for
+> exploration, language-design feedback, and small experiments. Breaking
+> changes remain possible.
 
-⸻
+## Quick start
 
-Design Philosophy
+Vulci provides standalone executables for Apple Silicon and Intel macOS. Install
+the latest release through Homebrew:
 
-Every significant language decision is evaluated against three core philosophies.
+```bash
+brew install TimVdWalle/vulci/vulci
+```
 
-Phi1 — One mental model for working with data
+Create `main.vci`:
 
-Regardless of whether data comes from memory, files, databases, APIs, streams, or other sources, programmers should work with it through the same mental model.
+```vulci
+$numbers = list[1, 2, 3]
+$total = 0
 
-Different data sources should not require fundamentally different programming models.
+$numbers.each(int number) {
+    $total = $total + number
+}
 
-⸻
+print("Total: {{$total}}")
+```
 
-Phi2 — Code should be easy to read and unambiguous
+Run it:
 
-Code is read far more often than it is written.
+```bash
+vulci .
+```
 
-Vulci favors clarity, consistency, and explicit intent over cleverness or unnecessary brevity. Every construct should have one clear interpretation, avoiding hidden behavior and surprising language rules whenever practical.
+Expected output:
 
-⸻
+```text
+Total: 6
+```
 
-Phi3 — Small building blocks, powerful combinations
+Use `vulci --help` for all command-line options. Executables and checksums are
+also available from [GitHub Releases](https://github.com/TimVdWalle/vulci-language/releases).
 
-Rather than introducing many specialized language features, Vulci aims to provide a small number of fundamental concepts that combine naturally into expressive solutions.
+## Why Vulci?
 
-Complexity should emerge from composition, not from an ever-growing collection of language features.
+Vulci is guided by three core philosophies:
 
-⸻
+- **One mental model for data.** Data should use the same core operations
+  regardless of its representation, source, or shape.
+- **Readable and unambiguous code.** Clarity, consistency, and explicit intent
+  take priority over cleverness or unnecessary brevity.
+- **Small building blocks, powerful combinations.** Complex solutions should
+  emerge by composing a limited set of fundamental concepts rather than adding
+  many specialized features.
 
-Project Goals
+These philosophies are not marketing themes; they are the evaluation framework
+for significant language decisions. Read the complete
+[language philosophies](project/philosophies.md) and
+[project vision](project/project_vision.md).
 
-The project distinguishes between the success of the project itself and the success of the language.
+## What works today
 
-A successful project
+The reference interpreter currently supports:
 
-The project should remain enjoyable, sustainable, and educational throughout its development.
+- integer, Boolean, `null`, and Unicode-aware string values;
+- arithmetic, logical operators, comparisons, chained comparisons, and
+  expression-oriented conditionals;
+- functions with lexical scope, implicit or explicit returns, named and
+  optional arguments, type annotations, unions, and nullable types;
+- string interpolation, multiline strings, concatenation, joining, comparison,
+  and basic string operations;
+- tuples, anonymous objects, mutable value-semantic structs, and enums;
+- relative `.vci` imports for transparent multi-file programs;
+- `list`, `set`, and `map` collections with shared operations, structural
+  equality, indexing where applicable, and immutable transformations;
+- expression-oriented `each` iteration over strings and collections;
+- useful source diagnostics, optional token and AST output, and colour-aware
+  command-line help;
+- standalone macOS releases and automated Homebrew distribution.
 
-A successful project is one that results in a complete programming language while providing an enjoyable opportunity to learn about language design, interpreter implementation, and the many trade-offs involved in creating a coherent language.
+See the [examples](examples) for programs grouped by implementation phase.
 
-A successful language
+## Roadmap
 
-The language succeeds only if it genuinely earns its place among existing programming languages.
+Vulci is developed incrementally, and implementation order does not represent
+the long-term importance of a feature. Phase 18, a basic looping construct, is
+currently design-blocked until its syntax and semantics are explicitly agreed.
 
-Novelty alone is not enough. Vulci should justify its existence through the quality, consistency, readability, and usefulness of its overall design.
+The authoritative [implementation phases](project/implementation/implementation_phases.md)
+describe completed work, planned phases, dependencies, and design blockers.
+Language rules remain authoritative in the corresponding syntax and semantics
+documents under [`project/language`](project/language).
 
-⸻
+## Editor support
 
-Design Principles
+The repository includes a lightweight TextMate bundle for JetBrains IDEs. It
+recognizes `.vci` files and provides theme-controlled highlighting for Vulci
+syntax, including strings and interpolation, variables, logical operators,
+control flow, structs, and enums.
 
-Some principles guide every language decision:
+Follow the [JetBrains installation guide](ide/jetbrains/README.md) to add the
+bundle to WebStorm or another compatible JetBrains IDE. This integration
+provides syntax-level editor support; command-line diagnostics remain
+authoritative.
 
-- Every feature should support one or more of the three philosophies.
-- Features should justify their existence.
-- Simplicity is preferred over feature count.
-- Consistency is preferred over special cases.
-- Temporary implementation constraints should not compromise the long-term language design.
-- The implementation order does not imply the importance of a feature.
+## Documentation
 
-⸻
+- [Language documentation](project/documentation/language_documentation.md) —
+  user-facing explanations and style guidance.
+- [Examples](examples) — runnable programs grouped by implementation phase.
+- [Project vision](project/project_vision.md) — purpose, ambition, scope, and
+  success criteria.
+- [Language philosophies](project/philosophies.md) — principles used to evaluate
+  significant language decisions.
+- [Implementation phases](project/implementation/implementation_phases.md) —
+  completed work, planned features, and blockers.
+- [Source-of-truth index](project/source_of_truth_index.md) — authority and
+  responsibility map for project documents.
+- [JetBrains support](ide/jetbrains/README.md) — `.vci` syntax-highlighting setup.
+- [GitHub Releases](https://github.com/TimVdWalle/vulci-language/releases) —
+  standalone executables and checksums.
 
-Name
+## Development
 
-The language is named Vulci, after the ancient Etruscan city of Vulci in present-day Italy.
-
-The name was chosen while the project’s creator was on holiday near the archaeological site itself. It was selected because it is short, distinctive, memorable, easy to pronounce, and independent of any particular programming concept or implementation detail.
-
-Source files currently use the extension:
-
-.vci
-
-Both the name and extension are accepted project decisions, although they may still evolve before a stable release.
-
-⸻
-
-Guiding Principle
-
-A programming language should reduce the number of things a programmer needs to think about—not increase them.
-
-If a language feature makes programs easier to understand, more consistent, and more expressive without increasing the programmer’s mental burden, it probably belongs in Vulci.
-
-If it does not, it probably doesn’t.
-
-⸻
-
-Development
-
-Install the project dependencies:
+Building Vulci from source requires Node.js 22. Install the dependencies:
 
 ```bash
 npm ci
 ```
 
+Run a Vulci source file through the development interpreter:
+
+```bash
+npm run dev -- program.vci
+```
+
 Available development commands:
 
 ```bash
-npm run dev         # Run the interpreter from source.
-npm run build       # Compile the interpreter.
+npm run dev              # Run the interpreter from source.
+npm run build            # Compile the interpreter.
 npm run build:executable # Build a standalone executable on macOS.
-npm test            # Run the automated test suite.
-npm run coverage    # Run the test suite with coverage reporting.
-npm run smoke       # Run the end-to-end smoke test.
-npm run check       # Run formatting, linting, type checking, tests, and the smoke test.
+npm test                 # Run the automated test suite.
+npm run coverage         # Run the test suite with coverage reporting.
+npm run smoke            # Run the end-to-end smoke test.
+npm run check            # Run formatting, linting, types, tests, and smoke.
 ```
 
-Building a standalone executable locally requires macOS and Node.js 22. The
-build produces an executable for the Mac's current architecture in `artifacts/`.
+The executable build targets the Mac's current architecture and writes its
+output to `artifacts/`. Before submitting a change, run both `npm run check` and
+`npm run coverage`.
 
-CLI usage:
+## Project background
 
-```bash
-vulci --help
-vulci --version
-vulci .
-vulci program.vci --tokens --ast
-```
+Vulci is a hobby project, but its language goal is not to produce a toy or a
+proof of concept. It is designed with the ambition and discipline of a serious,
+general-purpose programming language capable of solving real-world problems.
 
-Phase 15B releases provide standalone executables for Apple Silicon and Intel
-macOS. Once the Homebrew tap contains its generated formula, install Vulci with:
+The project succeeds if it remains enjoyable, sustainable, and educational.
+The language succeeds only if its overall quality, consistency, and usefulness
+eventually give experienced programmers a reason to choose it over existing
+alternatives. Novelty alone is not enough.
 
-```bash
-brew install TimVdWalle/vulci/vulci
-```
+A useful summary of the design standard is:
+
+> A programming language should reduce the number of things a programmer needs
+> to think about—not increase them.
+
+## Why the name Vulci?
+
+The language is named after the ancient Etruscan city of Vulci in present-day
+Italy. The project began while its creator was staying near the archaeological
+site, giving the name an authentic origin rather than a manufactured technical
+meaning.
+
+Vulci source files use the `.vci` extension. Both the language name and extension
+are accepted project decisions, although they may still evolve before a stable
+release.

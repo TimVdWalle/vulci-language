@@ -1,6 +1,14 @@
-<!-- Phase: Phase 14A .vci editor-support improvements -->
+<!-- Phase: Branding exploration after Phase 17 -->
 
-# Vulci support for JetBrains IDEs
+<p align="center">
+  <img src="../../branding/logo.svg" alt="Vulci logo" width="180">
+</p>
+
+<h1 align="center">Vulci support for JetBrains IDEs</h1>
+
+<p align="center">
+  Lightweight syntax highlighting for <code>.vci</code> files.
+</p>
 
 In WebStorm, open **Settings → Editor → TextMate Bundles**, click **Add**, and
 select the `Vulci.tmbundle` folder beside this file. The bundle recognizes `.vci`
