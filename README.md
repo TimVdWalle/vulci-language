@@ -1,14 +1,19 @@
 <!-- Phase: Branding exploration after Phase 17 -->
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="branding/vulci-readme-banner-dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="branding/vulci-readme-banner-light.png">
-  <img alt="Vulci is built around fewer concepts, clearer code, and a consistent way to work with data." src="branding/vulci-readme-banner-light.png">
+  <source media="(prefers-color-scheme: dark)" srcset="branding/vulci-readme-hero-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="branding/vulci-readme-hero-light.png">
+  <img alt="Vulci" src="branding/vulci-readme-hero-light.png">
 </picture>
 
-# Vulci
+<p align="center"><strong>Vulci is built around fewer concepts, clearer code, and a consistent way to work with data.</strong></p>
 
-Vulci is built around fewer concepts, clearer code, and a consistent way to work with data.
+<p align="center">
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#why-vulci">Why Vulci?</a> ·
+  <a href="#documentation">Documentation</a> ·
+  <a href="#development">Development</a>
+</p>
 
 Vulci aims to make programs easier to understand by combining a small set of
 consistent language features. Its central design goal is one mental model for
