@@ -16,7 +16,7 @@ if [[ -z "${GH_TOKEN:-}" || -z "${GH_REPO:-}" ]]; then
 fi
 
 if [[ -z "$ref" || -z "$sha" || ! "$timeout_seconds" =~ ^[1-9][0-9]*$ || -z "$marker" ]]; then
-  echo "Usage: watch-check-workflow.sh <ensure|dispatch> <ref> <sha> <timeout-seconds> <marker>" >&2
+  echo "Usage: watch-check-workflow.sh <ensure|dispatch|pull-request> <ref> <sha> <timeout-seconds> <marker>" >&2
   exit 1
 fi
 
@@ -39,6 +39,34 @@ find_dispatched_run() {
     --limit 50 \
     --json databaseId,displayTitle \
     --jq "first(.[] | select(.displayTitle == \"Checks for release $marker\")).databaseId // empty"
+}
+
+find_pull_request_run() {
+  gh run list \
+    --repo "$GH_REPO" \
+    --workflow "$workflow" \
+    --commit "$sha" \
+    --event pull_request \
+    --limit 50 \
+    --json conclusion,createdAt,databaseId,event \
+    --jq 'map(select(.event == "pull_request" and .conclusion != "action_required")) | sort_by(.createdAt) | reverse | .[0].databaseId // empty'
+}
+
+wait_for_pull_request_run() {
+  local discovery_deadline=$((SECONDS + 120))
+  local discovered=""
+  while [[ -z "$discovered" && $SECONDS -lt $discovery_deadline ]]; do
+    discovered="$(find_pull_request_run)"
+    [[ -n "$discovered" ]] || sleep 5
+  done
+
+  if [[ -z "$discovered" ]]; then
+    echo "Checks for pull request #$marker did not start within two minutes." >&2
+    echo "Confirm that RELEASE_TOKEN is a user or GitHub App token, not GITHUB_TOKEN." >&2
+    exit 1
+  fi
+
+  printf '%s\n' "$discovered"
 }
 
 dispatch_run() {
@@ -73,8 +101,11 @@ case "$mode" in
   dispatch)
     run_id="$(dispatch_run)"
     ;;
+  pull-request)
+    run_id="$(wait_for_pull_request_run)"
+    ;;
   *)
-    echo "Mode must be 'ensure' or 'dispatch'." >&2
+    echo "Mode must be 'ensure', 'dispatch', or 'pull-request'." >&2
     exit 1
     ;;
 esac
