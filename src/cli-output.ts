@@ -1,4 +1,4 @@
-// Phase 15B
+// Phase: Branding exploration after Phase 17
 
 import { inspect } from "node:util";
 import { Program } from "./ast.js";
@@ -6,9 +6,16 @@ import { Token, TokenType } from "./token.js";
 import { VULCI_VERSION } from "./version.js";
 
 const ansi = {
-  boldCyan: "\u001B[1;36m",
-  boldGreen: "\u001B[1;32m",
+  boldViolet: "\u001B[1;38;2;160;90;247m",
+  boldPink: "\u001B[1;38;2;244;92;172m",
   reset: "\u001B[0m",
+  wordmarkGradient: [
+    "\u001B[1;38;2;160;90;247m",
+    "\u001B[1;38;2;181;91;228m",
+    "\u001B[1;38;2;202;91;210m",
+    "\u001B[1;38;2;223;92;191m",
+    "\u001B[1;38;2;244;92;172m",
+  ],
 } as const;
 
 export interface ColorOutput {
@@ -17,6 +24,7 @@ export interface ColorOutput {
 }
 
 export interface CliStyle {
+  brandName(): string;
   heading(value: string): string;
   option(value: string): string;
 }
@@ -36,13 +44,19 @@ export function shouldUseColor(
 
 export function createCliStyle(useColor: boolean): CliStyle {
   return {
-    heading: (value) => style(value, ansi.boldCyan, useColor),
-    option: (value) => style(value, ansi.boldGreen, useColor),
+    brandName: () =>
+      [..."Vulci"]
+        .map((letter, index) =>
+          style(letter, ansi.wordmarkGradient[index]!, useColor),
+        )
+        .join(""),
+    heading: (value) => style(value, ansi.boldViolet, useColor),
+    option: (value) => style(value, ansi.boldPink, useColor),
   };
 }
 
 export function formatHelp(style: CliStyle): string {
-  return `${style.heading("Vulci")} ${VULCI_VERSION}
+  return `${style.brandName()} ${VULCI_VERSION}
 
 ${style.heading("Usage")}
   vulci . [options]
