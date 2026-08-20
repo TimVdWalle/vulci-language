@@ -2,6 +2,7 @@
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
@@ -71,9 +72,12 @@ test("plans a new release or a safe retry from aligned version sources", async (
 });
 
 test("reports plan script usage errors without a stack trace", () => {
+  const currentVersion = JSON.parse(
+    readFileSync(path.join(projectRoot, "package.json"), "utf8"),
+  ).version;
   const accepted = spawnSync(
     process.execPath,
-    [path.join(projectRoot, "scripts", "plan-release.mjs"), "0.18.0"],
+    [path.join(projectRoot, "scripts", "plan-release.mjs"), currentVersion],
     { encoding: "utf8" },
   );
   const result = spawnSync(
@@ -84,9 +88,9 @@ test("reports plan script usage errors without a stack trace", () => {
 
   assert.equal(accepted.status, 0, accepted.stderr);
   assert.deepEqual(JSON.parse(accepted.stdout), {
-    currentVersion: "0.17.0",
-    state: "prepare",
-    targetVersion: "0.18.0",
+    currentVersion,
+    state: "resume",
+    targetVersion: currentVersion,
   });
   assert.equal(result.status, 1);
   assert.match(result.stderr, /major\.minor\.patch/);
