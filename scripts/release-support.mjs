@@ -27,6 +27,36 @@ export function compareVersions(left, right) {
   return 0;
 }
 
+export function assertNextVersion(currentVersion, targetVersion) {
+  const [currentMajor, currentMinor, currentPatch] =
+    parseVersion(currentVersion);
+  const [targetMajor, targetMinor, targetPatch] = parseVersion(targetVersion);
+  const isPatch =
+    targetMajor === currentMajor &&
+    targetMinor === currentMinor &&
+    targetPatch === currentPatch + 1n;
+  const isMinor =
+    targetMajor === currentMajor &&
+    targetMinor === currentMinor + 1n &&
+    targetPatch === 0n;
+  const isMajor =
+    targetMajor === currentMajor + 1n &&
+    targetMinor === 0n &&
+    targetPatch === 0n;
+
+  if (!isPatch && !isMinor && !isMajor) {
+    const allowedVersions = [
+      `${currentMajor}.${currentMinor}.${currentPatch + 1n}`,
+      `${currentMajor}.${currentMinor + 1n}.0`,
+      `${currentMajor + 1n}.0.0`,
+    ];
+    throw new Error(
+      `Release ${targetVersion} is not a permitted next version after ${currentVersion}. ` +
+        `Choose ${allowedVersions.join(", ")}.`,
+    );
+  }
+}
+
 export function replaceCliVersion(source, currentVersion, targetVersion) {
   const pattern = /export const VULCI_VERSION = "([^"]+)";/;
   const match = pattern.exec(source);

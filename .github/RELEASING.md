@@ -10,85 +10,105 @@ For the one-time repository connection and token instructions, use the separate
 Labels such as `RELEASE-3` are just names for the steps. They help identify
 exactly where a problem occurred.
 
-## `RELEASE` — Publish a new version
+## `SETUP` — One-time GitHub configuration
 
-Run the release command in the local `vulci-language` repository. The example
-version is `0.17.0`; replace it with the version being released.
+The automated workflow uses GitHub's repository token; it does not need another
+personal access token.
 
-The repository uses npm and `package-lock.json`, so the canonical command is:
+1. `SETUP-ACTIONS-1` — Open **Settings → Actions → General**.
+2. `SETUP-ACTIONS-2` — Under **Workflow permissions**, enable **Allow GitHub
+   Actions to create and approve pull requests**, then save.
+3. `SETUP-MERGE-1` — Keep at least one pull-request merge method enabled.
+   Squash merge is preferred; the workflow otherwise uses rebase or merge.
+4. `SETUP-RULES-1` — Required status checks are supported. A rule requiring a
+   human review must either exempt this release workflow or be removed, because
+   a fully automatic release cannot supply a separate human approval.
+5. `SETUP-BREW-1` — Keep the existing `HOMEBREW_TAP_TOKEN` configured as
+   described in the [Homebrew connection guide](HOMEBREW_CONNECTION.md).
 
-```bash
-npm run release -- 0.17.0
-```
+## `RELEASE` — Publish a new version with one workflow run
 
-If pnpm is installed, this equivalent spelling also works:
+Merge every code, documentation, and feature change into `main` through its own
+pull request before starting a release. The automated release pull request may
+change only mechanical release files: currently `package.json`,
+`package-lock.json`, and `src/version.ts`.
 
-```bash
-pnpm run release 0.17.0
-```
+### `RELEASE-1` — Start the workflow
 
-The prepare stage requires [GitHub CLI](https://cli.github.com/) authenticated
-for this repository. Check it once with `gh auth status`.
+1. `RELEASE-START-1` — Open the
+   [Release version workflow](https://github.com/TimVdWalle/vulci-language/actions/workflows/release-version.yml).
+2. `RELEASE-START-2` — Select **Run workflow** and keep the branch set to
+   `main`.
+3. `RELEASE-START-3` — Enter the version without `v`, such as `0.18.0`.
+4. `RELEASE-START-4` — Select **Run workflow**. No later approval, merge, local
+   command, or second workflow run is required.
 
-### `RELEASE-1` — Prepare the version pull request
+The target must be exactly one permitted stable SemVer step. From `0.19.0`, the
+only valid versions are `0.19.1`, `0.20.0`, and `1.0.0`. Skipped versions,
+older versions, and prerelease syntax are rejected. Repeating the current
+version is accepted only as a strictly validated recovery attempt.
 
-Merge the release's language or tooling work into `main` first. Then run the
-release command from a clean local `main` whose current version is lower than
-the requested version.
+### `RELEASE-2` — Automated readiness and release pull request
 
-The command performs these guarded operations:
+The workflow performs these guarded operations:
 
-- `RELEASE-PREP-1` — Fetches `origin` and requires local `main` to match
-  `origin/main` exactly.
-- `RELEASE-PREP-2` — Rejects malformed or non-increasing versions and existing
-  release branches or tags.
-- `RELEASE-PREP-3` — Creates `release/v0.17.0`.
-- `RELEASE-PREP-4` — Updates `package.json`, both version fields in
-  `package-lock.json`, and `src/version.ts`.
-- `RELEASE-PREP-5` — Verifies version alignment, runs `npm run check`, and runs
-  `npm run coverage`.
-- `RELEASE-PREP-6` — Commits only the three version files, pushes the branch,
-  and opens the release pull request.
+- `RELEASE-GATE-1` — Requires the selected workflow branch and current remote
+  branch to be `main`.
+- `RELEASE-GATE-2` — Requires every version source to agree and the requested
+  version to be one permitted next step.
+- `RELEASE-GATE-3` — Waits up to 30 minutes for Checks on the exact current
+  `main` commit. A failed check stops the release.
+- `RELEASE-GATE-4` — Rejects conflicting release pull requests, tags, releases,
+  or unexpected files.
+- `RELEASE-GATE-5` — Creates or safely recovers `release/v<version>`, updates
+  only the three release files, and opens the pull request.
+- `RELEASE-GATE-6` — Runs formatting, linting, type checks, tests, smoke tests,
+  and coverage after the version update.
+- `RELEASE-GATE-7` — Shows cancellation instructions and waits two minutes
+  after all release-PR checks pass.
+- `RELEASE-GATE-8` — Rechecks the open pull request, exact head commit, and
+  unchanged `main`, then merges the pull request automatically.
+- `RELEASE-GATE-9` — Reruns Checks on the merged commit before creating its
+  immutable annotated tag.
 
-If the requested version is already present on `origin/main`, the command skips
-the prepare stage and proceeds to `RELEASE-3`.
+### `RELEASE-CANCEL` — Stop an accidental release
 
-### `RELEASE-2` — Review and merge the pull request
+Before the release pull request merges, either action is sufficient:
 
-Review the version-only pull request and wait for its GitHub check to succeed.
-Merge it into `main`. The release command deliberately does not approve or merge
-its own pull request.
+1. `RELEASE-CANCEL-1` — Open the workflow run and select **Cancel workflow** in
+   the upper-right; or
+2. `RELEASE-CANCEL-2` — Open the generated release pull request and select
+   **Close pull request**.
 
-### `RELEASE-3` — Publish after the merge
+The workflow summary and pull-request body repeat these instructions. The
+workflow never enables persistent auto-merge, and it verifies that the pull
+request is still open immediately before merging. On workflow cancellation, it
+also attempts to close the unmerged pull request and delete its generated
+branch. After the pull request has merged, cancellation cannot undo already
+completed work.
 
-Run the exact same command again:
+### `RELEASE-3` — Automated publishing and recovery
 
-```bash
-npm run release -- 0.17.0
-```
+After merging, the same initiating run creates or validates the release tag,
+builds both macOS executables, publishes the GitHub Release, and updates the
+Homebrew tap. The initiating run is green only when every destination succeeds.
 
-The command fetches the merged `origin/main`, switches to and fast-forwards
-local `main` when needed, verifies every version source, reruns checks and
-coverage, creates the annotated `v0.17.0` tag, and pushes it. Pushing the tag
-starts the release workflow.
+Starting `Release version` again with the same version safely resumes a release
+that already merged but failed later. Recovery requires the matching merged
+release pull request, unchanged `main`, an identical immutable tag when present,
+and valid existing GitHub Release assets. It never moves a tag or overwrites a
+conflicting release.
 
-If the remote tag already points to the synchronized `main` commit, the command
-reports that the release is already published without moving or recreating it.
+### `RELEASE-4` — Wait for the initiating run
 
-### `RELEASE-4` — Wait for GitHub Actions
+Wait until these jobs are green in the same `Release version` run:
 
-Open the [Vulci Release workflow](https://github.com/TimVdWalle/vulci-language/actions/workflows/release.yml),
-then open the run for the tag you just pushed.
-
-Wait until all five jobs are green:
-
-- `RELEASE-JOB-1` — `Checks`
-- `RELEASE-JOB-2` — `Build macOS arm64`
-- `RELEASE-JOB-3` — `Build macOS x64`
-- `RELEASE-JOB-4` — `Publish GitHub Release`
-- `RELEASE-JOB-5` — `Update Homebrew tap`
-
-Homebrew is not updated until the final job succeeds.
+- `RELEASE-JOB-1` — `Prepare and merge release`
+- `RELEASE-JOB-2` — `Checks`
+- `RELEASE-JOB-3` — `Build macOS arm64`
+- `RELEASE-JOB-4` — `Build macOS x64`
+- `RELEASE-JOB-5` — `Publish GitHub Release`
+- `RELEASE-JOB-6` — `Update Homebrew tap`
 
 ### `RELEASE-5` — Verify GitHub and Homebrew
 
@@ -118,14 +138,29 @@ brew install TimVdWalle/vulci/vulci
 
 The version printed by `vulci --version` must be the version you released.
 
+## `RELEASE-LOCAL` — Maintainer fallback
+
+The existing local two-stage command remains available for diagnosing or
+recovering automation problems:
+
+```bash
+npm run release -- 0.18.0
+```
+
+On a clean synchronized `main`, the first run creates the version pull request.
+After manually merging it, running the same command again validates `main` and
+pushes the tag. This fallback requires an authenticated GitHub CLI and is not the
+normal release path.
+
 ## `RELEASE-RULES` — Important rules
 
 - `RULE-MAIN` — Tag only after the release commit is merged into `main`.
-- `RULE-PR` — Keep the version update reviewable; never make the release command
-  merge its own pull request.
+- `RULE-PR` — Keep the mechanical version update visible in its own pull
+  request; the guarded `Release version` workflow may merge that pull request
+  automatically.
 - `RULE-NEW` — Use a new, increasing version for every release.
 - `RULE-TAG` — Never reuse or move a tag after pushing it.
-- `RULE-WAIT` — Wait for all five workflow jobs before announcing the release.
+- `RULE-WAIT` — Wait for all six workflow jobs before announcing the release.
 - `RULE-OLD` — Do not push old `v*` tags just to recreate history. Every pushed
   `v*` tag starts the release workflow and could make Homebrew point to an older
   version.
@@ -136,6 +171,19 @@ The version printed by `vulci --version` must be the version you released.
 
 Open the release run in GitHub Actions. The first red job tells you which section
 below to use.
+
+### `FAIL-COORDINATOR` — `Prepare and merge release` stopped
+
+- `FAIL-COORDINATOR-1` — If pull-request creation or merging was forbidden,
+  complete `SETUP-ACTIONS-1` through `SETUP-RULES-1`, then start `Release
+version` again with the same target.
+- `FAIL-COORDINATOR-2` — If `main` moved before the release PR merged, wait for
+  the new `main` Checks run, then start the same version again. The workflow
+  validates and rebases its mechanical release commit before rerunning checks.
+- `FAIL-COORDINATOR-3` — If you deliberately cancelled or closed the release
+  PR, the stopped run is expected. Confirm that no release tag was created.
+- `FAIL-COORDINATOR-4` — Never add a manual code or documentation fix to the
+  generated release branch. Merge the fix into `main` through its own PR.
 
 ### `FAIL-COMMAND` — The local release command stopped
 
@@ -153,9 +201,11 @@ below to use.
 
 ### `FAIL-NO-RUN` — No workflow appeared
 
-- `FAIL-NO-RUN-1` — Confirm the tag begins with `v`.
-- `FAIL-NO-RUN-2` — Confirm you pushed the tag to
-  `TimVdWalle/vulci-language`. A local-only tag does not trigger GitHub.
+- `FAIL-NO-RUN-1` — For the normal path, confirm that you opened `Release
+version`, selected `main`, and selected the final **Run workflow** button.
+- `FAIL-NO-RUN-2` — For the local fallback, confirm the tag begins with `v` and
+  was pushed to `TimVdWalle/vulci-language`. A local-only tag does not trigger
+  GitHub.
 
 ### `FAIL-CHECKS` — `Checks` is red
 
@@ -178,7 +228,9 @@ executables succeed.
 
 Inspect `Verify checksums` and `Publish release`. Also check whether that tag or
 GitHub Release already exists. Do not delete or move anything until you know
-which state already exists.
+which state already exists. After correcting only an external or transient
+failure, start `Release version` again with the same version; it validates and
+reuses a complete existing release instead of replacing its assets.
 
 ### `FAIL-HOMEBREW` — `Update Homebrew tap` is red
 
@@ -188,7 +240,8 @@ repository, permission, and branch checks.
 
 If only the token or another external setting was corrected, use GitHub's
 **Re-run failed jobs** action on the same run. The re-run uses the original
-commit and tag.
+commit and tag. Starting `Release version` again with the same version is also a
+supported recovery path.
 
 If source code or workflow configuration must change, merge the fix and create a
 new version and tag.

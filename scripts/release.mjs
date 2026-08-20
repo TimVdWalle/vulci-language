@@ -6,6 +6,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import {
   assertClean,
   assertMainIsSynchronized,
+  assertNextVersion,
   compareVersions,
   createCommandRunner,
   output,
@@ -39,11 +40,7 @@ function prepareRelease({ log, root, run, version }) {
   const branch = `release/v${version}`;
   const currentVersion = readJson(path.join(root, "package.json")).version;
 
-  if (compareVersions(version, currentVersion) <= 0) {
-    throw new Error(
-      `Release ${version} must be newer than current version ${currentVersion}.`,
-    );
-  }
+  assertNextVersion(currentVersion, version);
 
   if (refExists(run, `refs/heads/${branch}`)) {
     throw new Error(`Local branch '${branch}' already exists.`);
@@ -106,7 +103,15 @@ function prepareRelease({ log, root, run, version }) {
     "--title",
     `🚀 Release Vulci ${version}`,
     "--body",
-    `REL-PR-${version} — Updates every Vulci version source and passes the complete release gates.`,
+    [
+      `REL-PR-${version} — Updates every Vulci version source and passes the complete release gates.`,
+      "",
+      "This pull request contains only mechanically generated release metadata.",
+      "",
+      "## Stop an automated release",
+      "",
+      "Before this pull request merges, open its matching Release version run in GitHub Actions and click Cancel workflow, or close this pull request. Either action prevents the release.",
+    ].join("\n"),
   ]);
 
   log(

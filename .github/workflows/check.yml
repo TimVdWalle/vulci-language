@@ -1,6 +1,15 @@
+# Phase: Phase 15B CLI, distribution, and quality hardening
+
 name: Checks
+run-name: ${{ inputs.release_run && format('Checks for release {0}', inputs.release_run) || 'Checks' }}
 
 on:
+  workflow_dispatch:
+    inputs:
+      release_run:
+        description: Internal identifier for an automated release check
+        required: false
+        type: string
   pull_request:
     branches:
       - main
