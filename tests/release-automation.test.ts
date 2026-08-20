@@ -167,7 +167,7 @@ test("rejects conflicting release refs and unexpected changed files", () => {
         localVersion: "0.17.0",
         remoteVersion: "0.16.0",
       }),
-      message: /must be newer than current version/,
+      message: /not a permitted next version/,
     },
     {
       fixture: createFixture({

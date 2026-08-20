@@ -8,9 +8,26 @@ on:
   push:
     tags:
       - "v*"
+  workflow_call:
+    inputs:
+      release_ref:
+        description: Commit containing the verified release version
+        required: true
+        type: string
+      release_tag:
+        description: Existing immutable v-prefixed release tag
+        required: true
+        type: string
+    secrets:
+      HOMEBREW_TAP_TOKEN:
+        required: true
 
 permissions:
   contents: read
+
+env:
+  RELEASE_REF: ${{ inputs.release_ref || github.ref }}
+  RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
 
 jobs:
   checks:
@@ -19,6 +36,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
+        with:
+          ref: ${{ env.RELEASE_REF }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
@@ -30,7 +49,7 @@ jobs:
         run: npm ci
 
       - name: Verify release version
-        run: node scripts/verify-release-version.mjs "$GITHUB_REF_NAME"
+        run: node scripts/verify-release-version.mjs "$RELEASE_TAG"
 
       - name: Run checks and coverage
         run: npm run check && npm run coverage
@@ -49,6 +68,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
+        with:
+          ref: ${{ env.RELEASE_REF }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
@@ -63,11 +84,11 @@ jobs:
         run: npm run build:executable
 
       - name: Smoke-test executable
-        run: npm run smoke:executable -- "artifacts/vulci-${GITHUB_REF_NAME#v}-macos-${{ matrix.architecture }}"
+        run: npm run smoke:executable -- "artifacts/vulci-${RELEASE_TAG#v}-macos-${{ matrix.architecture }}"
 
       - name: Generate checksum
         working-directory: artifacts
-        run: shasum -a 256 "vulci-${GITHUB_REF_NAME#v}-macos-${{ matrix.architecture }}" > "vulci-${GITHUB_REF_NAME#v}-macos-${{ matrix.architecture }}.sha256"
+        run: shasum -a 256 "vulci-${RELEASE_TAG#v}-macos-${{ matrix.architecture }}" > "vulci-${RELEASE_TAG#v}-macos-${{ matrix.architecture }}.sha256"
 
       - name: Upload executable
         uses: actions/upload-artifact@v7
@@ -98,7 +119,29 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-        run: gh release create "$GITHUB_REF_NAME" artifacts/* --verify-tag --generate-notes --title "Vulci ${GITHUB_REF_NAME#v}"
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            release_state="$(gh release view "$RELEASE_TAG" --json isDraft,isPrerelease --jq '[.isDraft, .isPrerelease] | @tsv')"
+            if [[ "$release_state" != $'false\tfalse' ]]; then
+              echo "$RELEASE_TAG exists but is a draft or prerelease." >&2
+              exit 1
+            fi
+
+            mkdir published-artifacts
+            gh release download "$RELEASE_TAG" --dir published-artifacts
+            for architecture in arm64 x64; do
+              executable="published-artifacts/vulci-${RELEASE_TAG#v}-macos-$architecture"
+              checksum="$executable.sha256"
+              if [[ ! -f "$executable" || ! -f "$checksum" ]]; then
+                echo "$RELEASE_TAG is missing the $architecture executable or checksum." >&2
+                exit 1
+              fi
+              (cd published-artifacts && shasum -a 256 --check "$(basename "$checksum")")
+            done
+            echo "$RELEASE_TAG already has a complete verified GitHub Release."
+          else
+            gh release create "$RELEASE_TAG" artifacts/* --verify-tag --generate-notes --title "Vulci ${RELEASE_TAG#v}"
+          fi
 
   homebrew:
     name: Update Homebrew tap
@@ -109,6 +152,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           path: source
+          ref: ${{ env.RELEASE_REF }}
 
       - name: Check out Homebrew tap
         uses: actions/checkout@v7
@@ -122,15 +166,17 @@ jobs:
         with:
           node-version: 22
 
-      - name: Download executable artifacts
-        uses: actions/download-artifact@v8
-        with:
-          pattern: vulci-macos-*
-          path: artifacts
-          merge-multiple: true
+      - name: Download published executable assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          mkdir artifacts
+          gh release download "$RELEASE_TAG" --dir artifacts
+          (cd artifacts && shasum -a 256 --check *.sha256)
 
       - name: Generate formula
-        run: node source/scripts/generate-homebrew-formula.mjs tap "$GITHUB_REPOSITORY" "${GITHUB_REF_NAME#v}" artifacts/vulci-${GITHUB_REF_NAME#v}-macos-arm64.sha256 artifacts/vulci-${GITHUB_REF_NAME#v}-macos-x64.sha256
+        run: node source/scripts/generate-homebrew-formula.mjs tap "$GITHUB_REPOSITORY" "${RELEASE_TAG#v}" artifacts/vulci-${RELEASE_TAG#v}-macos-arm64.sha256 artifacts/vulci-${RELEASE_TAG#v}-macos-x64.sha256
 
       - name: Publish formula
         working-directory: tap
@@ -138,5 +184,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add Formula/vulci.rb
-          git diff --cached --quiet || git commit -m "Update Vulci to ${GITHUB_REF_NAME#v}"
+          git diff --cached --quiet || git commit -m "Update Vulci to ${RELEASE_TAG#v}"
           git push

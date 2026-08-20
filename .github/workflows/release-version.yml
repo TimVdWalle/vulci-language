@@ -1,0 +1,441 @@
+# Phase: Phase 15B CLI, distribution, and quality hardening
+# Maintainer guide: .github/RELEASING.md
+
+name: Release version
+run-name: Release Vulci v${{ inputs.version }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to release, without the v prefix
+        required: true
+        type: string
+
+concurrency:
+  group: vulci-release
+  cancel-in-progress: false
+
+permissions:
+  actions: write
+  contents: write
+  pull-requests: write
+
+jobs:
+  coordinate:
+    name: Prepare and merge release
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      GH_REPO: ${{ github.repository }}
+      GH_TOKEN: ${{ github.token }}
+    outputs:
+      release_ref: ${{ steps.release-ref.outputs.sha }}
+      release_tag: ${{ steps.release-ref.outputs.tag }}
+
+    steps:
+      - name: Require main
+        run: |
+          if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+            echo "Run this workflow from main, not $GITHUB_REF." >&2
+            exit 1
+          fi
+
+      - name: Check out current main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure release identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Validate release plan
+        id: plan
+        env:
+          TARGET_VERSION: ${{ inputs.version }}
+        run: |
+          git fetch --prune --tags origin main
+          git merge --ff-only origin/main
+
+          plan="$(node scripts/plan-release.mjs "$TARGET_VERSION")"
+          current_version="$(jq -r .currentVersion <<< "$plan")"
+          state="$(jq -r .state <<< "$plan")"
+          main_sha="$(git rev-parse origin/main)"
+          release_branch="release/v$TARGET_VERSION"
+          release_tag="v$TARGET_VERSION"
+
+          other_release_prs="$(
+            gh pr list \
+              --base main \
+              --state open \
+              --limit 100 \
+              --json headRefName,url \
+              --jq ".[] | select(.headRefName | startswith(\"release/v\")) | select(.headRefName != \"$release_branch\") | .url"
+          )"
+          if [[ -n "$other_release_prs" ]]; then
+            echo "Another release pull request is open: $other_release_prs" >&2
+            exit 1
+          fi
+
+          if [[ "$state" == "prepare" ]]; then
+            if git ls-remote --exit-code --tags origin "refs/tags/$release_tag" >/dev/null 2>&1; then
+              echo "Tag $release_tag already exists while main is still $current_version." >&2
+              exit 1
+            fi
+            if gh release view "$release_tag" >/dev/null 2>&1; then
+              echo "GitHub Release $release_tag already exists while main is still $current_version." >&2
+              exit 1
+            fi
+          fi
+
+          echo "current_version=$current_version" >> "$GITHUB_OUTPUT"
+          echo "main_sha=$main_sha" >> "$GITHUB_OUTPUT"
+          echo "release_branch=$release_branch" >> "$GITHUB_OUTPUT"
+          echo "release_tag=$release_tag" >> "$GITHUB_OUTPUT"
+          echo "state=$state" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "## RELEASE-PLAN — Vulci $TARGET_VERSION"
+            echo
+            echo "- Current version: \`$current_version\`"
+            echo "- Target version: \`$TARGET_VERSION\`"
+            echo "- State: \`$state\`"
+            echo "- Main commit: \`$main_sha\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Require successful checks on current main
+        env:
+          MAIN_SHA: ${{ steps.plan.outputs.main_sha }}
+        run: |
+          bash scripts/watch-check-workflow.sh \
+            ensure main "$MAIN_SHA" 1800 \
+            "${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-initial-main"
+
+      - name: Prepare or recover release pull request
+        if: steps.plan.outputs.state == 'prepare'
+        id: pull-request
+        env:
+          INITIAL_MAIN_SHA: ${{ steps.plan.outputs.main_sha }}
+          RELEASE_BRANCH: ${{ steps.plan.outputs.release_branch }}
+          TARGET_VERSION: ${{ inputs.version }}
+        run: |
+          git fetch --prune origin main "$RELEASE_BRANCH" || git fetch --prune origin main
+          current_main_sha="$(git rev-parse origin/main)"
+          if [[ "$current_main_sha" != "$INITIAL_MAIN_SHA" ]]; then
+            echo "Main moved from $INITIAL_MAIN_SHA to $current_main_sha during validation." >&2
+            exit 1
+          fi
+
+          pr_number="$(
+            gh pr list \
+              --base main \
+              --head "$RELEASE_BRANCH" \
+              --state open \
+              --limit 1 \
+              --json number \
+              --jq '.[0].number // empty'
+          )"
+
+          if git show-ref --verify --quiet "refs/remotes/origin/$RELEASE_BRANCH"; then
+            git switch --detach "origin/$RELEASE_BRANCH"
+          else
+            git switch main
+            npm run release -- "$TARGET_VERSION"
+            git fetch origin "$RELEASE_BRANCH"
+            git switch --detach "origin/$RELEASE_BRANCH"
+          fi
+
+          node scripts/verify-release-version.mjs "v$TARGET_VERSION"
+          expected_files=$'package-lock.json\npackage.json\nsrc/version.ts'
+          merge_base="$(git merge-base "$INITIAL_MAIN_SHA" HEAD)"
+          commit_count="$(git rev-list --count "$merge_base"..HEAD)"
+          changed_files="$(git diff --name-only "$merge_base"...HEAD | sort)"
+          if [[ "$commit_count" != "1" || "$changed_files" != "$expected_files" ]]; then
+            echo "The release branch must contain one commit changing only the release version files." >&2
+            echo "$changed_files" >&2
+            exit 1
+          fi
+
+          if ! git merge-base --is-ancestor "$INITIAL_MAIN_SHA" HEAD; then
+            previous_branch_sha="$(git rev-parse HEAD)"
+            git switch -C "$RELEASE_BRANCH"
+            git rebase "$INITIAL_MAIN_SHA"
+            node scripts/verify-release-version.mjs "v$TARGET_VERSION"
+
+            commit_count="$(git rev-list --count "$INITIAL_MAIN_SHA"..HEAD)"
+            changed_files="$(git diff --name-only "$INITIAL_MAIN_SHA"...HEAD | sort)"
+            if [[ "$commit_count" != "1" || "$changed_files" != "$expected_files" ]]; then
+              echo "Rebasing introduced unexpected release changes." >&2
+              exit 1
+            fi
+
+            git push \
+              --force-with-lease="refs/heads/$RELEASE_BRANCH:$previous_branch_sha" \
+              origin "HEAD:refs/heads/$RELEASE_BRANCH"
+          fi
+
+          branch_sha="$(git rev-parse HEAD)"
+          if [[ -z "$pr_number" ]]; then
+            pr_number="$(
+              gh pr list \
+                --base main \
+                --head "$RELEASE_BRANCH" \
+                --state open \
+                --limit 1 \
+                --json number \
+                --jq '.[0].number // empty'
+            )"
+          fi
+          if [[ -z "$pr_number" ]]; then
+            pr_body="$(printf '%s\n\n%s\n\n%s\n\n%s' \
+              "REL-PR-$TARGET_VERSION — Updates every Vulci version source and passes the complete release gates." \
+              "This pull request contains only mechanically generated release metadata." \
+              "## Stop this release" \
+              "Before this pull request merges, either [cancel the linked workflow run]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID) or close this pull request. Either action prevents the release.")"
+            gh pr create \
+              --base main \
+              --head "$RELEASE_BRANCH" \
+              --title "🚀 Release Vulci $TARGET_VERSION" \
+              --body "$pr_body" \
+              >/dev/null
+            pr_number="$(
+              gh pr list \
+                --base main \
+                --head "$RELEASE_BRANCH" \
+                --state open \
+                --limit 1 \
+                --json number \
+                --jq '.[0].number // empty'
+            )"
+          fi
+
+          pr_json="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$pr_number")"
+          pr_state="$(jq -r .state <<< "$pr_json")"
+          pr_head_sha="$(jq -r .head.sha <<< "$pr_json")"
+          pr_url="$(jq -r .html_url <<< "$pr_json")"
+          if [[ "$pr_state" != "open" || "$pr_head_sha" != "$branch_sha" ]]; then
+            echo "Release pull request state or head commit changed unexpectedly." >&2
+            exit 1
+          fi
+
+          echo "head_sha=$branch_sha" >> "$GITHUB_OUTPUT"
+          echo "number=$pr_number" >> "$GITHUB_OUTPUT"
+          echo "url=$pr_url" >> "$GITHUB_OUTPUT"
+
+          {
+            echo
+            echo "## RELEASE-CANCEL — How to stop before merge"
+            echo
+            echo "1. Click **Cancel workflow** in the upper-right of [this run]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID); or"
+            echo "2. Close [release pull request #$pr_number]($pr_url)."
+            echo
+            echo "Either action prevents the merge. Once the pull request has merged, cancellation cannot undo completed release work."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run checks on release pull request
+        if: steps.plan.outputs.state == 'prepare'
+        env:
+          HEAD_SHA: ${{ steps.pull-request.outputs.head_sha }}
+          RELEASE_BRANCH: ${{ steps.plan.outputs.release_branch }}
+        run: |
+          bash scripts/watch-check-workflow.sh \
+            dispatch "$RELEASE_BRANCH" "$HEAD_SHA" 1800 \
+            "${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-release-pr"
+
+      - name: Cancellation window
+        if: steps.plan.outputs.state == 'prepare'
+        run: |
+          echo "All release PR checks passed. Waiting two minutes before merge."
+          echo "Cancel this workflow or close the release PR now to stop the release."
+          sleep 120
+
+      - name: Merge release pull request
+        if: steps.plan.outputs.state == 'prepare'
+        id: merge
+        env:
+          EXPECTED_HEAD_SHA: ${{ steps.pull-request.outputs.head_sha }}
+          INITIAL_MAIN_SHA: ${{ steps.plan.outputs.main_sha }}
+          PR_NUMBER: ${{ steps.pull-request.outputs.number }}
+          TARGET_VERSION: ${{ inputs.version }}
+        run: |
+          pr_json="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER")"
+          if [[ "$(jq -r .state <<< "$pr_json")" != "open" ]]; then
+            echo "Release pull request #$PR_NUMBER was closed; stopping the release." >&2
+            exit 1
+          fi
+          if [[ "$(jq -r .base.ref <<< "$pr_json")" != "main" ]]; then
+            echo "Release pull request #$PR_NUMBER no longer targets main." >&2
+            exit 1
+          fi
+          if [[ "$(jq -r .head.sha <<< "$pr_json")" != "$EXPECTED_HEAD_SHA" ]]; then
+            echo "Release pull request #$PR_NUMBER changed after its checks passed." >&2
+            exit 1
+          fi
+
+          current_main_sha="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq .sha)"
+          if [[ "$current_main_sha" != "$INITIAL_MAIN_SHA" ]]; then
+            echo "Main moved after release validation; stopping before merge." >&2
+            exit 1
+          fi
+
+          repository="$(gh api "repos/$GITHUB_REPOSITORY")"
+          merge_method="$(
+            jq -r '
+              if .allow_squash_merge then "squash"
+              elif .allow_rebase_merge then "rebase"
+              elif .allow_merge_commit then "merge"
+              else ""
+              end
+            ' <<< "$repository"
+          )"
+          if [[ -z "$merge_method" ]]; then
+            echo "The repository has no supported pull request merge method enabled." >&2
+            exit 1
+          fi
+
+          merge_response="$(
+            gh api \
+              --method PUT \
+              "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/merge" \
+              --raw-field "sha=$EXPECTED_HEAD_SHA" \
+              --raw-field "merge_method=$merge_method" \
+              --raw-field "commit_title=🚀 Prepare Vulci $TARGET_VERSION" \
+              --raw-field "commit_message=REL-MERGE-$TARGET_VERSION — Automated after all release gates passed."
+          )"
+          if [[ "$(jq -r .merged <<< "$merge_response")" != "true" ]]; then
+            jq -r .message <<< "$merge_response" >&2
+            exit 1
+          fi
+
+          merge_sha="$(jq -r .sha <<< "$merge_response")"
+          echo "sha=$merge_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Validate resumable release
+        if: steps.plan.outputs.state == 'resume'
+        id: resume
+        env:
+          MAIN_SHA: ${{ steps.plan.outputs.main_sha }}
+          RELEASE_BRANCH: ${{ steps.plan.outputs.release_branch }}
+          TARGET_VERSION: ${{ inputs.version }}
+        run: |
+          pr_number="$(
+            gh pr list \
+              --base main \
+              --head "$RELEASE_BRANCH" \
+              --state merged \
+              --limit 20 \
+              --json mergeCommit,mergedAt,number \
+              --jq 'sort_by(.mergedAt) | reverse | .[0].number // empty'
+          )"
+          if [[ -z "$pr_number" ]]; then
+            echo "Version $TARGET_VERSION is on main, but no matching merged release pull request exists." >&2
+            exit 1
+          fi
+
+          pr_json="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$pr_number")"
+          merge_sha="$(jq -r .merge_commit_sha <<< "$pr_json")"
+          if [[ "$merge_sha" != "$MAIN_SHA" ]]; then
+            echo "Main advanced after release pull request #$pr_number; $TARGET_VERSION can no longer be resumed safely." >&2
+            exit 1
+          fi
+
+          changed_files="$(
+            gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$pr_number/files" \
+              --jq '.[].filename' | sort
+          )"
+          expected_files=$'package-lock.json\npackage.json\nsrc/version.ts'
+          if [[ "$changed_files" != "$expected_files" ]]; then
+            echo "Release pull request #$pr_number contains unexpected files." >&2
+            echo "$changed_files" >&2
+            exit 1
+          fi
+
+          echo "sha=$merge_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Run checks on merged release
+        if: steps.plan.outputs.state == 'prepare'
+        env:
+          MERGE_SHA: ${{ steps.merge.outputs.sha }}
+        run: |
+          bash scripts/watch-check-workflow.sh \
+            dispatch main "$MERGE_SHA" 1800 \
+            "${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-merged-main"
+
+      - name: Create or validate release tag
+        id: release-ref
+        env:
+          PREPARED_SHA: ${{ steps.merge.outputs.sha }}
+          RELEASE_BRANCH: ${{ steps.plan.outputs.release_branch }}
+          RELEASE_TAG: ${{ steps.plan.outputs.release_tag }}
+          RESUMED_SHA: ${{ steps.resume.outputs.sha }}
+          TARGET_VERSION: ${{ inputs.version }}
+        run: |
+          release_sha="${PREPARED_SHA:-$RESUMED_SHA}"
+          current_main_sha="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq .sha)"
+          if [[ -z "$release_sha" || "$current_main_sha" != "$release_sha" ]]; then
+            echo "Main moved before tagging; stopping the release." >&2
+            exit 1
+          fi
+
+          git fetch --prune --tags origin main
+          git switch --detach "$release_sha"
+          node scripts/verify-release-version.mjs "$RELEASE_TAG"
+
+          if git show-ref --verify --quiet "refs/tags/$RELEASE_TAG"; then
+            tag_type="$(git cat-file -t "$RELEASE_TAG")"
+            if [[ "$tag_type" != "tag" ]]; then
+              echo "$RELEASE_TAG exists but is not an annotated tag." >&2
+              exit 1
+            fi
+            tagged_sha="$(git rev-list -n 1 "$RELEASE_TAG")"
+            if [[ "$tagged_sha" != "$release_sha" ]]; then
+              echo "$RELEASE_TAG exists but points to $tagged_sha instead of $release_sha." >&2
+              exit 1
+            fi
+          else
+            git tag -a "$RELEASE_TAG" -m "Vulci $TARGET_VERSION" "$release_sha"
+            git push origin "$RELEASE_TAG"
+          fi
+
+          git push origin --delete "$RELEASE_BRANCH" >/dev/null 2>&1 || true
+          echo "sha=$release_sha" >> "$GITHUB_OUTPUT"
+          echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+
+          {
+            echo
+            echo "## RELEASE-PUBLISH — Publishing $RELEASE_TAG"
+            echo
+            echo "The release pull request is merged and the immutable tag points to \`$release_sha\`."
+            echo "This run will finish only after GitHub Release and Homebrew finish."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Clean up a cancelled release pull request
+        if: cancelled() && steps.pull-request.outputs.number != ''
+        continue-on-error: true
+        env:
+          PR_NUMBER: ${{ steps.pull-request.outputs.number }}
+        run: gh pr close "$PR_NUMBER" --delete-branch
+
+  publish:
+    name: Publish release and update destinations
+    needs: coordinate
+    permissions:
+      actions: read
+      contents: write
+    uses: ./.github/workflows/release.yml
+    with:
+      release_ref: ${{ needs.coordinate.outputs.release_ref }}
+      release_tag: ${{ needs.coordinate.outputs.release_tag }}
+    secrets: inherit
