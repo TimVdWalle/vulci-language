@@ -61,7 +61,9 @@ The workflow performs these guarded operations:
 - `RELEASE-GATE-4` — Rejects conflicting release pull requests, tags, releases,
   or unexpected files.
 - `RELEASE-GATE-5` — Creates or safely recovers `release/v<version>`, updates
-  only the three release files, and opens the pull request.
+  only the three release files, and opens the pull request. After rebasing an
+  existing release branch, it waits up to two minutes for GitHub's pull-request
+  head and generated merge commit to synchronize.
 - `RELEASE-GATE-6` — Runs formatting, linting, type checks, tests, smoke tests,
   and coverage on GitHub's exact pull-request merge commit after the version
   update. Its temporary validation branch is removed afterward.
@@ -188,6 +190,10 @@ version` again with the same target.
 - `FAIL-COORDINATOR-5` — If GitHub reports that required `Checks` are expected,
   merge the workflow fix into `main`, then start the same version again. The
   workflow validates the exact pull-request merge commit required by the rule.
+- `FAIL-COORDINATOR-6` — If a release branch was successfully rebased but its
+  pull request still showed the previous commit briefly, retry after merging
+  the synchronization fix. The workflow now waits for GitHub instead of
+  treating this temporary delay as a changed pull request.
 
 ### `FAIL-COMMAND` — The local release command stopped
 

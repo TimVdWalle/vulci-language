@@ -26,6 +26,9 @@ test("coordinates a guarded one-start release", () => {
   assert.match(workflow, /pull-requests: write/);
   assert.match(workflow, /ensure main "\$MAIN_SHA" 1800/);
   assert.match(workflow, /expected_files=.*package-lock\.json/);
+  assert.match(workflow, /synchronization_deadline=\$\(\(SECONDS \+ 120\)\)/);
+  assert.match(workflow, /pr_head_sha.*==.*branch_sha/);
+  assert.match(workflow, /did not synchronize.*within two minutes/);
   assert.match(workflow, /refs\/pull\/\$pr_number\/merge/);
   assert.match(workflow, /dispatch "\$VALIDATION_BRANCH" "\$MERGE_SHA" 1800/);
   assert.match(workflow, /merge_commit_sha/);
