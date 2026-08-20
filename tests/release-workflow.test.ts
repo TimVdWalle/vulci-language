@@ -26,7 +26,14 @@ test("coordinates a guarded one-start release", () => {
   assert.match(workflow, /pull-requests: write/);
   assert.match(workflow, /ensure main "\$MAIN_SHA" 1800/);
   assert.match(workflow, /expected_files=.*package-lock\.json/);
-  assert.match(workflow, /dispatch "\$RELEASE_BRANCH" "\$HEAD_SHA" 1800/);
+  assert.match(workflow, /refs\/pull\/\$pr_number\/merge/);
+  assert.match(workflow, /dispatch "\$VALIDATION_BRANCH" "\$MERGE_SHA" 1800/);
+  assert.match(workflow, /merge_commit_sha/);
+  assert.match(
+    workflow,
+    /different merge commit than the one that passed Checks/,
+  );
+  assert.match(workflow, /git push origin --delete "\$VALIDATION_BRANCH"/);
   assert.match(workflow, /sleep 120/);
   assert.match(workflow, /\.state.*!= "open"/);
   assert.match(workflow, /--raw-field "sha=\$EXPECTED_HEAD_SHA"/);
