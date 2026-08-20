@@ -18,7 +18,6 @@ concurrency:
 
 permissions:
   actions: write
-  checks: read
   contents: write
   pull-requests: write
 
@@ -29,12 +28,21 @@ jobs:
     timeout-minutes: 90
     env:
       GH_REPO: ${{ github.repository }}
-      GH_TOKEN: ${{ github.token }}
+      GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
     outputs:
       release_ref: ${{ steps.release-ref.outputs.sha }}
       release_tag: ${{ steps.release-ref.outputs.tag }}
 
     steps:
+      - name: Require release token
+        env:
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: |
+          if [[ -z "$RELEASE_TOKEN" ]]; then
+            echo "Repository secret RELEASE_TOKEN is required; see .github/RELEASING.md." >&2
+            exit 1
+          fi
+
       - name: Require main
         run: |
           if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
@@ -47,6 +55,7 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
+          token: ${{ secrets.RELEASE_TOKEN }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
@@ -148,6 +157,15 @@ jobs:
               --json number \
               --jq '.[0].number // empty'
           )"
+          if [[ -n "$pr_number" ]]; then
+            pr_author="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$pr_number" --jq .user.login)"
+            if [[ "$pr_author" == "github-actions[bot]" ]]; then
+              gh pr close "$pr_number" \
+                --comment "REL-RECOVERY-$TARGET_VERSION — Replacing this legacy bot-authored pull request so required Checks can run without manual approval." \
+                >/dev/null
+              pr_number=""
+            fi
+          fi
 
           if git show-ref --verify --quiet "refs/remotes/origin/$RELEASE_BRANCH"; then
             git switch --detach "origin/$RELEASE_BRANCH"
@@ -225,26 +243,20 @@ jobs:
           synchronization_deadline=$((SECONDS + 120))
           synchronized=false
           pr_url=""
-          merge_sha=""
           while (( SECONDS < synchronization_deadline )); do
             pr_json="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$pr_number")"
             pr_state="$(jq -r .state <<< "$pr_json")"
             pr_head_sha="$(jq -r .head.sha <<< "$pr_json")"
             pr_url="$(jq -r .html_url <<< "$pr_json")"
-            api_merge_sha="$(jq -r '.merge_commit_sha // empty' <<< "$pr_json")"
 
             if [[ "$pr_state" != "open" ]]; then
               echo "Release pull request #$pr_number was closed; stopping the release." >&2
               exit 1
             fi
 
-            if [[ "$pr_head_sha" == "$branch_sha" ]] &&
-              git fetch origin "refs/pull/$pr_number/merge"; then
-              merge_sha="$(git rev-parse FETCH_HEAD)"
-              if [[ -n "$api_merge_sha" && "$merge_sha" == "$api_merge_sha" ]]; then
-                synchronized=true
-                break
-              fi
+            if [[ "$pr_head_sha" == "$branch_sha" ]]; then
+              synchronized=true
+              break
             fi
 
             echo "Waiting for GitHub to synchronize release pull request #$pr_number."
@@ -255,14 +267,9 @@ jobs:
             exit 1
           fi
 
-          validation_branch="release-check/v$TARGET_VERSION-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
-          git push --force origin "$merge_sha:refs/heads/$validation_branch"
-
           echo "head_sha=$branch_sha" >> "$GITHUB_OUTPUT"
-          echo "merge_sha=$merge_sha" >> "$GITHUB_OUTPUT"
           echo "number=$pr_number" >> "$GITHUB_OUTPUT"
           echo "url=$pr_url" >> "$GITHUB_OUTPUT"
-          echo "validation_branch=$validation_branch" >> "$GITHUB_OUTPUT"
 
           {
             echo
@@ -277,19 +284,12 @@ jobs:
       - name: Run checks on release pull request
         if: steps.plan.outputs.state == 'prepare'
         env:
-          MERGE_SHA: ${{ steps.pull-request.outputs.merge_sha }}
-          VALIDATION_BRANCH: ${{ steps.pull-request.outputs.validation_branch }}
+          HEAD_SHA: ${{ steps.pull-request.outputs.head_sha }}
+          PR_NUMBER: ${{ steps.pull-request.outputs.number }}
+          RELEASE_BRANCH: ${{ steps.plan.outputs.release_branch }}
         run: |
           bash scripts/watch-check-workflow.sh \
-            dispatch "$VALIDATION_BRANCH" "$MERGE_SHA" 1800 \
-            "${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-release-pr"
-
-      - name: Clean up release check branch
-        if: always() && steps.pull-request.outputs.validation_branch != ''
-        continue-on-error: true
-        env:
-          VALIDATION_BRANCH: ${{ steps.pull-request.outputs.validation_branch }}
-        run: git push origin --delete "$VALIDATION_BRANCH"
+            pull-request "$RELEASE_BRANCH" "$HEAD_SHA" 1800 "$PR_NUMBER"
 
       - name: Cancellation window
         if: steps.plan.outputs.state == 'prepare'
@@ -303,7 +303,6 @@ jobs:
         id: merge
         env:
           EXPECTED_HEAD_SHA: ${{ steps.pull-request.outputs.head_sha }}
-          EXPECTED_MERGE_SHA: ${{ steps.pull-request.outputs.merge_sha }}
           INITIAL_MAIN_SHA: ${{ steps.plan.outputs.main_sha }}
           PR_NUMBER: ${{ steps.pull-request.outputs.number }}
           TARGET_VERSION: ${{ inputs.version }}
@@ -321,11 +320,6 @@ jobs:
             echo "Release pull request #$PR_NUMBER changed after its checks passed." >&2
             exit 1
           fi
-          if [[ "$(jq -r '.merge_commit_sha // empty' <<< "$pr_json")" != "$EXPECTED_MERGE_SHA" ]]; then
-            echo "Release pull request #$PR_NUMBER has a different merge commit than the one that passed Checks." >&2
-            exit 1
-          fi
-
           current_main_sha="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq .sha)"
           if [[ "$current_main_sha" != "$INITIAL_MAIN_SHA" ]]; then
             echo "Main moved after release validation; stopping before merge." >&2

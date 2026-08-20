@@ -24,19 +24,20 @@ test("coordinates a guarded one-start release", () => {
   assert.match(workflow, /cancel-in-progress: false/);
   assert.match(workflow, /actions: write/);
   assert.match(workflow, /pull-requests: write/);
+  assert.match(workflow, /GH_TOKEN:.*secrets\.RELEASE_TOKEN/);
+  assert.match(workflow, /token:.*secrets\.RELEASE_TOKEN/);
   assert.match(workflow, /ensure main "\$MAIN_SHA" 1800/);
   assert.match(workflow, /expected_files=.*package-lock\.json/);
+  assert.match(workflow, /pr_author.*github-actions\[bot\]/);
+  assert.match(workflow, /Replacing this legacy bot-authored pull request/);
   assert.match(workflow, /synchronization_deadline=\$\(\(SECONDS \+ 120\)\)/);
   assert.match(workflow, /pr_head_sha.*==.*branch_sha/);
   assert.match(workflow, /did not synchronize.*within two minutes/);
-  assert.match(workflow, /refs\/pull\/\$pr_number\/merge/);
-  assert.match(workflow, /dispatch "\$VALIDATION_BRANCH" "\$MERGE_SHA" 1800/);
-  assert.match(workflow, /merge_commit_sha/);
   assert.match(
     workflow,
-    /different merge commit than the one that passed Checks/,
+    /pull-request "\$RELEASE_BRANCH" "\$HEAD_SHA" 1800 "\$PR_NUMBER"/,
   );
-  assert.match(workflow, /git push origin --delete "\$VALIDATION_BRANCH"/);
+  assert.doesNotMatch(workflow, /release-check/);
   assert.match(workflow, /sleep 120/);
   assert.match(workflow, /\.state.*!= "open"/);
   assert.match(workflow, /--raw-field "sha=\$EXPECTED_HEAD_SHA"/);
@@ -50,9 +51,13 @@ test("coordinates a guarded one-start release", () => {
 test("keeps checks dispatchable and publishing safely reusable", () => {
   const checks = readProjectFile(".github/workflows/check.yml");
   const release = readProjectFile(".github/workflows/release.yml");
+  const watcher = readProjectFile("scripts/watch-check-workflow.sh");
 
   assert.match(checks, /workflow_dispatch:/);
   assert.match(checks, /Checks for release/);
+  assert.match(watcher, /find_pull_request_run/);
+  assert.match(watcher, /conclusion != "action_required"/);
+  assert.match(watcher, /RELEASE_TOKEN is a user or GitHub App token/);
   assert.match(release, /workflow_call:/);
   assert.match(release, /release_ref:/);
   assert.match(release, /release_tag:/);

@@ -12,18 +12,28 @@ exactly where a problem occurred.
 
 ## `SETUP` — One-time GitHub configuration
 
-The automated workflow uses GitHub's repository token; it does not need another
-personal access token.
+The automated workflow requires a dedicated user or GitHub App token. GitHub
+intentionally holds pull-request checks for approval when the built-in
+`GITHUB_TOKEN` creates or updates a pull request, which cannot support this
+unattended release flow.
 
-1. `SETUP-ACTIONS-1` — Open **Settings → Actions → General**.
-2. `SETUP-ACTIONS-2` — Under **Workflow permissions**, enable **Allow GitHub
-   Actions to create and approve pull requests**, then save.
-3. `SETUP-MERGE-1` — Keep at least one pull-request merge method enabled.
+1. `SETUP-TOKEN-1` — In GitHub account settings, create a fine-grained personal
+   access token for only `TimVdWalle/vulci-language`.
+2. `SETUP-TOKEN-2` — Give it repository permissions **Actions: Read and write**,
+   **Contents: Read and write**, and **Pull requests: Read and write**.
+3. `SETUP-TOKEN-3` — In this repository, open **Settings → Secrets and variables
+   → Actions**, create the repository secret `RELEASE_TOKEN`, and paste the
+   token as its value.
+4. `SETUP-ACTIONS-1` — Open **Settings → Actions → General**.
+5. `SETUP-ACTIONS-2` — The older **Allow GitHub Actions to create and approve
+   pull requests** setting may remain enabled, but the release workflow no
+   longer relies on it.
+6. `SETUP-MERGE-1` — Keep at least one pull-request merge method enabled.
    Squash merge is preferred; the workflow otherwise uses rebase or merge.
-4. `SETUP-RULES-1` — Required status checks are supported. A rule requiring a
+7. `SETUP-RULES-1` — Required status checks are supported. A rule requiring a
    human review must either exempt this release workflow or be removed, because
    a fully automatic release cannot supply a separate human approval.
-5. `SETUP-BREW-1` — Keep the existing `HOMEBREW_TAP_TOKEN` configured as
+8. `SETUP-BREW-1` — Keep the existing `HOMEBREW_TAP_TOKEN` configured as
    described in the [Homebrew connection guide](HOMEBREW_CONNECTION.md).
 
 ## `RELEASE` — Publish a new version with one workflow run
@@ -63,10 +73,12 @@ The workflow performs these guarded operations:
 - `RELEASE-GATE-5` — Creates or safely recovers `release/v<version>`, updates
   only the three release files, and opens the pull request. After rebasing an
   existing release branch, it waits up to two minutes for GitHub's pull-request
-  head and generated merge commit to synchronize.
+  head to synchronize. A legacy PR authored by `github-actions[bot]` is closed
+  and replaced once under `RELEASE_TOKEN` so it cannot retain an
+  approval-required check.
 - `RELEASE-GATE-6` — Runs formatting, linting, type checks, tests, smoke tests,
-  and coverage on GitHub's exact pull-request merge commit after the version
-  update. Its temporary validation branch is removed afterward.
+  and coverage through the genuine pull-request `Checks` run after the version
+  update.
 - `RELEASE-GATE-7` — Shows cancellation instructions and waits two minutes
   after all release-PR checks pass.
 - `RELEASE-GATE-8` — Rechecks the open pull request, exact head commit, and
@@ -188,8 +200,8 @@ version` again with the same target.
 - `FAIL-COORDINATOR-4` — Never add a manual code or documentation fix to the
   generated release branch. Merge the fix into `main` through its own PR.
 - `FAIL-COORDINATOR-5` — If GitHub reports that required `Checks` are expected,
-  merge the workflow fix into `main`, then start the same version again. The
-  workflow validates the exact pull-request merge commit required by the rule.
+  confirm `SETUP-TOKEN-1` through `SETUP-TOKEN-3`. A manually dispatched check
+  cannot replace GitHub's approval-required pull-request check.
 - `FAIL-COORDINATOR-6` — If a release branch was successfully rebased but its
   pull request still showed the previous commit briefly, retry after merging
   the synchronization fix. The workflow now waits for GitHub instead of
