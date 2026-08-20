@@ -63,7 +63,8 @@ The workflow performs these guarded operations:
 - `RELEASE-GATE-5` — Creates or safely recovers `release/v<version>`, updates
   only the three release files, and opens the pull request.
 - `RELEASE-GATE-6` — Runs formatting, linting, type checks, tests, smoke tests,
-  and coverage after the version update.
+  and coverage on GitHub's exact pull-request merge commit after the version
+  update. Its temporary validation branch is removed afterward.
 - `RELEASE-GATE-7` — Shows cancellation instructions and waits two minutes
   after all release-PR checks pass.
 - `RELEASE-GATE-8` — Rechecks the open pull request, exact head commit, and
@@ -184,6 +185,9 @@ version` again with the same target.
   PR, the stopped run is expected. Confirm that no release tag was created.
 - `FAIL-COORDINATOR-4` — Never add a manual code or documentation fix to the
   generated release branch. Merge the fix into `main` through its own PR.
+- `FAIL-COORDINATOR-5` — If GitHub reports that required `Checks` are expected,
+  merge the workflow fix into `main`, then start the same version again. The
+  workflow validates the exact pull-request merge commit required by the rule.
 
 ### `FAIL-COMMAND` — The local release command stopped
 

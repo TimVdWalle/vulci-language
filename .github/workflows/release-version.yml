@@ -18,6 +18,7 @@ concurrency:
 
 permissions:
   actions: write
+  checks: read
   contents: write
   pull-requests: write
 
@@ -230,9 +231,21 @@ jobs:
             exit 1
           fi
 
+          validation_branch="release-check/v$TARGET_VERSION-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          git fetch origin "refs/pull/$pr_number/merge"
+          merge_sha="$(git rev-parse FETCH_HEAD)"
+          api_merge_sha="$(jq -r '.merge_commit_sha // empty' <<< "$pr_json")"
+          if [[ -z "$api_merge_sha" || "$merge_sha" != "$api_merge_sha" ]]; then
+            echo "GitHub's release pull request merge commit is not stable yet." >&2
+            exit 1
+          fi
+          git push --force origin "$merge_sha:refs/heads/$validation_branch"
+
           echo "head_sha=$branch_sha" >> "$GITHUB_OUTPUT"
+          echo "merge_sha=$merge_sha" >> "$GITHUB_OUTPUT"
           echo "number=$pr_number" >> "$GITHUB_OUTPUT"
           echo "url=$pr_url" >> "$GITHUB_OUTPUT"
+          echo "validation_branch=$validation_branch" >> "$GITHUB_OUTPUT"
 
           {
             echo
@@ -247,12 +260,19 @@ jobs:
       - name: Run checks on release pull request
         if: steps.plan.outputs.state == 'prepare'
         env:
-          HEAD_SHA: ${{ steps.pull-request.outputs.head_sha }}
-          RELEASE_BRANCH: ${{ steps.plan.outputs.release_branch }}
+          MERGE_SHA: ${{ steps.pull-request.outputs.merge_sha }}
+          VALIDATION_BRANCH: ${{ steps.pull-request.outputs.validation_branch }}
         run: |
           bash scripts/watch-check-workflow.sh \
-            dispatch "$RELEASE_BRANCH" "$HEAD_SHA" 1800 \
+            dispatch "$VALIDATION_BRANCH" "$MERGE_SHA" 1800 \
             "${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-release-pr"
+
+      - name: Clean up release check branch
+        if: always() && steps.pull-request.outputs.validation_branch != ''
+        continue-on-error: true
+        env:
+          VALIDATION_BRANCH: ${{ steps.pull-request.outputs.validation_branch }}
+        run: git push origin --delete "$VALIDATION_BRANCH"
 
       - name: Cancellation window
         if: steps.plan.outputs.state == 'prepare'
@@ -266,6 +286,7 @@ jobs:
         id: merge
         env:
           EXPECTED_HEAD_SHA: ${{ steps.pull-request.outputs.head_sha }}
+          EXPECTED_MERGE_SHA: ${{ steps.pull-request.outputs.merge_sha }}
           INITIAL_MAIN_SHA: ${{ steps.plan.outputs.main_sha }}
           PR_NUMBER: ${{ steps.pull-request.outputs.number }}
           TARGET_VERSION: ${{ inputs.version }}
@@ -281,6 +302,10 @@ jobs:
           fi
           if [[ "$(jq -r .head.sha <<< "$pr_json")" != "$EXPECTED_HEAD_SHA" ]]; then
             echo "Release pull request #$PR_NUMBER changed after its checks passed." >&2
+            exit 1
+          fi
+          if [[ "$(jq -r '.merge_commit_sha // empty' <<< "$pr_json")" != "$EXPECTED_MERGE_SHA" ]]; then
+            echo "Release pull request #$PR_NUMBER has a different merge commit than the one that passed Checks." >&2
             exit 1
           fi
 
