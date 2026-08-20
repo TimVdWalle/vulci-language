@@ -1,4 +1,4 @@
-// Phase 16
+// Phase: Branding exploration after Phase 17
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -34,6 +34,14 @@ const escapedVersion = packageJson.version.replace(
   /[.*+?^${}()|[\]\\]/g,
   "\\$&",
 );
+const wordmarkGradient = [
+  "\u001B[1;38;2;160;90;247m",
+  "\u001B[1;38;2;181;91;228m",
+  "\u001B[1;38;2;202;91;210m",
+  "\u001B[1;38;2;223;92;191m",
+  "\u001B[1;38;2;244;92;172m",
+] as const;
+const ansiReset = "\u001B[0m";
 
 function runCli(...arguments_: string[]) {
   return spawnSync(
@@ -182,18 +190,38 @@ test("formats plain and coloured CLI output consistently", () => {
     type: "Program" as const,
     statements: [],
   };
+  const plainHelp = formatHelp(plain);
+  const colouredHelp = formatHelp(coloured);
+  const expectedWordmark = [..."Vulci"]
+    .map((letter, index) => `${wordmarkGradient[index]}${letter}${ansiReset}`)
+    .join("");
 
-  assert.match(formatHelp(plain), new RegExp(`^Vulci ${escapedVersion}`));
+  assert.match(plainHelp, new RegExp(`^Vulci ${escapedVersion}`));
+  assert.equal(
+    [...wordmarkGradient, ansiReset].reduce(
+      (output, code) => output.replaceAll(code, ""),
+      colouredHelp,
+    ),
+    plainHelp,
+  );
   assert.equal(formatVersion(), `Vulci ${packageJson.version}\n`);
   assert.equal(formatTokens(tokens, plain).includes("\u001B["), false);
   assert.equal(formatAst(program, plain, false).includes("\u001B["), false);
-  assert.equal(formatHelp(coloured).includes("\u001B[1;36mVulci"), true);
+  assert.equal(colouredHelp.startsWith(expectedWordmark), true);
   assert.equal(
-    formatTokens(tokens, coloured).includes("\u001B[1;36mTokens"),
+    colouredHelp.includes("\u001B[1;38;2;160;90;247mUsage\u001B[0m"),
     true,
   );
   assert.equal(
-    formatAst(program, coloured, true).includes("\u001B[1;36mAST"),
+    colouredHelp.includes("\u001B[1;38;2;244;92;172m-h, --help\u001B[0m"),
+    true,
+  );
+  assert.equal(
+    formatTokens(tokens, coloured).includes("\u001B[1;38;2;160;90;247mTokens"),
+    true,
+  );
+  assert.equal(
+    formatAst(program, coloured, true).includes("\u001B[1;38;2;160;90;247mAST"),
     true,
   );
   assert.match(formatCliError(new Error("failure")), /failure/);
