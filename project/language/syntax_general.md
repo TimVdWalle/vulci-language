@@ -1,9 +1,9 @@
-<!-- Phase: Phase 17 collection iteration -->
+<!-- Phase: Phase 18 counted loops -->
 <!-- Document ID: syntax-general -->
-<!-- Version: 30 -->
+<!-- Version: 31 -->
 <!-- Status: Active -->
 <!-- Authority: Accepted non-collection-specific Vulci syntax -->
-<!-- Supersedes: syntax-general v29 -->
+<!-- Supersedes: syntax-general v30 -->
 
 # General Syntax Specification
 
@@ -914,15 +914,103 @@ Collection Syntax and Collection Semantics Specifications.
 
 ---
 
+## Counted Repetition
+
+Counted repetition uses the receiver-attached `.times` loop form with required
+parentheses and a brace-delimited executable body.
+
+```text
+3.times() {
+    print("Hello")
+}
+```
+
+The parentheses contain either no binding or one untyped, ordinary unprefixed
+index binding.
+
+```text
+3.times(index) {
+    print(index)
+}
+```
+
+A typed index binding, a `$`-prefixed binding, a binding expression, and a
+destructuring binding are invalid. A `.times` body may be empty.
+
+The following brace-delimited body distinguishes the language-level loop form
+from an ordinary member call. `.times(...) { ... }` is always the loop form.
+`.times(...)` without a body is an ordinary method call and may invoke a
+user-defined struct method named `times`.
+
+The complete `.times` form is an expression. Further operations may be chained
+after its body under the General Semantics Specification.
+
+Integer `.each` is not accepted. Collection traversal remains the responsibility
+of the collection-specific `each` loop.
+
+---
+
+## Condition-Driven Repetition
+
+Condition-driven repetition uses `while` with a required parenthesized condition
+and a brace-delimited executable body.
+
+```text
+while (running) {
+    work()
+}
+```
+
+A `while` body may be empty. The complete `while` form is an expression.
+`do...while` and other condition-driven loop forms are not accepted.
+
+---
+
+## Loop Exit
+
+`break` is a bare loop-control form.
+
+```text
+while (running) {
+    break
+}
+```
+
+`break` may only target a lexically enclosing `each`, `.times`, or `while` loop
+without crossing a function or method boundary. A top-level `break` may therefore
+target a top-level loop. Break values and labels are not accepted. Code after an
+unconditional `break` in the same block is invalid. A `break` inside a nested
+conditional does not by itself make later expressions in the outer block
+unreachable.
+
+`continue` is not accepted.
+
+---
+
+## Future Loop Context
+
+A future language phase will provide a contextual value named `loop` inside
+every language-level loop body.
+
+The accepted loop-context member names currently include:
+
+```text
+loop.prev
+loop.next
+```
+
+Phase 18 does not provide this contextual binding or newly reserve the name
+`loop`. Exact loop-context member semantics, any additional member names, and
+its future implementation phase remain deferred in the Decision Register.
+
+---
+
 ## Conditions
 
 Parentheses are required.
 
 ```text
 if (ready) {
-}
-
-while (running) {
 }
 ```
 

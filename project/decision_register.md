@@ -1,7 +1,7 @@
-<!-- Phase: Phase 17 collection iteration -->
+<!-- Phase: Phase 18 counted loops -->
 <!-- Document ID: decision-register -->
-<!-- Version: 13 -->
-<!-- Supersedes: decision-register v12 -->
+<!-- Version: 14 -->
+<!-- Supersedes: decision-register v13 -->
 <!-- Status: Active -->
 <!-- Authority: Status and history of non-accepted, rejected, deferred, and superseded design items -->
 
@@ -20,7 +20,9 @@ future features remain in their owning syntax or semantics specifications.
 # General syntax
 
 - `dec-syn-001` — Compound assignment syntax — **Deferred**
-- `dec-syn-002` — General loop syntax beyond collection `each` — **Deferred**
+- `dec-syn-002` — General loop syntax beyond collection `each`, integer `.times`,
+  and condition-driven `while` — **Partially superseded** by those accepted loop
+  forms; `do...while` and other general loop forms remain **Deferred**
 - `dec-syn-003` — Match/switch syntax — **Deferred**
 - `dec-syn-004` — Lambda syntax — **Deferred**
 - `dec-syn-005` — General user-defined generic syntax — **Deferred**
@@ -39,6 +41,11 @@ future features remain in their owning syntax or semantics specifications.
 - `dec-syn-018` — Phase 10 string and interpolation diagnostic codes — **Superseded** by the accepted short stable codes
 - `dec-syn-019` — Numeric tuple-member access through `.` — **Superseded** by the accepted general bracket-indexing syntax
 - `dec-syn-020` — Empty and one-member tuple literals — **Rejected**; tuple literals contain at least two members
+- `dec-syn-021` — Typed index-binding syntax and empty-body syntax for integer
+  `.times` loops — **Superseded** by the accepted untyped-only index binding and
+  valid empty-body rules
+- `dec-syn-022` — Loop-control syntax beyond bare `break`, including `continue`,
+  break values, and labeled loop control — **Deferred**
 
 The former broad entries “Object syntax” and “Class syntax” were stale and are
 resolved by the accepted tuple, anonymous-object, struct, and class designs.
@@ -67,6 +74,11 @@ existing deferred match/switch and pattern-matching entries.
 - `dec-sem-012` — Default expressions depending on earlier parameters — **Deferred until `ph23` design**
 - `dec-sem-013` — Invalid string member-call diagnostic categories — **Superseded** by the accepted general member and argument diagnostic codes
 - `dec-sem-014` — Tuple-specific indexing diagnostic categories — **Rejected** in favour of shared general indexing diagnostics
+- `dec-sem-015` — Remaining integer `.times` details — **Superseded** by the
+  accepted receiver-evaluation, index-binding, result, control-flow, and
+  diagnostic rules in the General Semantics Specification
+- `dec-sem-016` — `continue`, break values, labeled loop targeting, and other
+  advanced loop-control semantics — **Deferred**
 
 # Collection syntax
 
@@ -76,6 +88,8 @@ existing deferred match/switch and pattern-matching entries.
 - `dec-col-syn-004` — Capabilities-system syntax — **Deferred**
 - `dec-col-syn-005` — `.length` as a string/collection count alias — **Rejected** in favour of the accepted `count()` operation
 - `dec-col-syn-006` — `.isList`, `.isSet`, and `.isMap` concrete-kind properties — **Superseded** by the accepted general `is Type` operator for concrete, typed, and broad collection type inspection
+- `dec-col-syn-007` — Exact binding-and-block syntax for future `map`, `filter`,
+  and related traversal operations — **Undecided**
 
 Callback-style `each()` forms are **Superseded** by the accepted language-level,
 brace-delimited `each` loop decision. Lambdas may later provide alternative
@@ -92,7 +106,17 @@ collection processing, but no replacement decision is accepted.
 - `dec-col-sem-007` — Exact `reduce()` semantics — **Deferred until `ph29` design**
 - `dec-col-sem-008` — Exact `group()` semantics — **Deferred until `ph30` design**
 - `dec-col-sem-009` — Exact `any()` and `all()` semantics — **Undecided**
-- `dec-col-sem-010` — Contextual loop metadata and nested-loop behaviour — **Partially superseded** by accepted ordinary nested `each` expressions; contextual metadata and advanced nested-loop behaviour remain **Deferred**
+- `dec-col-sem-010` — Universal contextual `loop` details and nested-loop
+  behaviour — **Partially superseded** by accepted ordinary nested `each`
+  expressions, the accepted universal `loop` context, and its accepted `prev`
+  and `next` member names. The exact additional fields (`index`, `iteration`,
+  `isFirst`, `isLast`, `hasNext`, and `hasPrevious`); context mutability,
+  reservation, shadowing, first-class use, lifetime, context resolution in
+  nested loops, outer-loop access, and visibility to called functions; per-receiver `prev`
+  and `next` meanings; boundary behaviour; navigation-capability checks;
+  guarantees against implicit advancing or external fetching; unsupported-source
+  behaviour remain **Undecided**. Implementation is **Deferred** beyond Phase 18;
+  the exact future phase remains undecided
 - `dec-col-sem-011` — Capabilities system details and boundary-type interaction — **Deferred**
 - `dec-col-sem-012` — User-defined collection-capable types — **Deferred**
 - `dec-col-sem-013` — Pattern-matching unmatched-case behaviour — **Deferred**
