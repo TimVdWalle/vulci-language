@@ -2,15 +2,20 @@
 # Maintainer guide: .github/RELEASING.md
 
 name: Release version
-run-name: Release Vulci v${{ inputs.version }}
+run-name: Release Vulci (${{ inputs.version }})
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: Version to release, without the v prefix
+        description: Release the current version again or select the next SemVer step
         required: true
-        type: string
+        type: choice
+        options:
+          - current
+          - major
+          - minor
+          - patch
 
 concurrency:
   group: vulci-release
@@ -74,17 +79,18 @@ jobs:
       - name: Validate release plan
         id: plan
         env:
-          TARGET_VERSION: ${{ inputs.version }}
+          RELEASE_SELECTION: ${{ inputs.version }}
         run: |
           git fetch --prune --tags origin main
           git merge --ff-only origin/main
 
-          plan="$(node scripts/plan-release.mjs "$TARGET_VERSION")"
+          plan="$(node scripts/plan-release.mjs "$RELEASE_SELECTION")"
           current_version="$(jq -r .currentVersion <<< "$plan")"
           state="$(jq -r .state <<< "$plan")"
+          target_version="$(jq -r .targetVersion <<< "$plan")"
           main_sha="$(git rev-parse origin/main)"
-          release_branch="release/v$TARGET_VERSION"
-          release_tag="v$TARGET_VERSION"
+          release_branch="release/v$target_version"
+          release_tag="v$target_version"
 
           other_release_prs="$(
             gh pr list \
@@ -115,12 +121,14 @@ jobs:
           echo "release_branch=$release_branch" >> "$GITHUB_OUTPUT"
           echo "release_tag=$release_tag" >> "$GITHUB_OUTPUT"
           echo "state=$state" >> "$GITHUB_OUTPUT"
+          echo "target_version=$target_version" >> "$GITHUB_OUTPUT"
 
           {
-            echo "## RELEASE-PLAN — Vulci $TARGET_VERSION"
+            echo "## RELEASE-PLAN — Vulci $target_version"
             echo
             echo "- Current version: \`$current_version\`"
-            echo "- Target version: \`$TARGET_VERSION\`"
+            echo "- Selected release: \`$RELEASE_SELECTION\`"
+            echo "- Target version: \`$target_version\`"
             echo "- State: \`$state\`"
             echo "- Main commit: \`$main_sha\`"
           } >> "$GITHUB_STEP_SUMMARY"
@@ -139,7 +147,7 @@ jobs:
         env:
           INITIAL_MAIN_SHA: ${{ steps.plan.outputs.main_sha }}
           RELEASE_BRANCH: ${{ steps.plan.outputs.release_branch }}
-          TARGET_VERSION: ${{ inputs.version }}
+          TARGET_VERSION: ${{ steps.plan.outputs.target_version }}
         run: |
           git fetch --prune origin main "$RELEASE_BRANCH" || git fetch --prune origin main
           current_main_sha="$(git rev-parse origin/main)"
@@ -305,7 +313,7 @@ jobs:
           EXPECTED_HEAD_SHA: ${{ steps.pull-request.outputs.head_sha }}
           INITIAL_MAIN_SHA: ${{ steps.plan.outputs.main_sha }}
           PR_NUMBER: ${{ steps.pull-request.outputs.number }}
-          TARGET_VERSION: ${{ inputs.version }}
+          TARGET_VERSION: ${{ steps.plan.outputs.target_version }}
         run: |
           pr_json="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER")"
           if [[ "$(jq -r .state <<< "$pr_json")" != "open" ]]; then
@@ -364,7 +372,7 @@ jobs:
         env:
           MAIN_SHA: ${{ steps.plan.outputs.main_sha }}
           RELEASE_BRANCH: ${{ steps.plan.outputs.release_branch }}
-          TARGET_VERSION: ${{ inputs.version }}
+          TARGET_VERSION: ${{ steps.plan.outputs.target_version }}
         run: |
           pr_number="$(
             gh pr list \
@@ -416,7 +424,7 @@ jobs:
           RELEASE_BRANCH: ${{ steps.plan.outputs.release_branch }}
           RELEASE_TAG: ${{ steps.plan.outputs.release_tag }}
           RESUMED_SHA: ${{ steps.resume.outputs.sha }}
-          TARGET_VERSION: ${{ inputs.version }}
+          TARGET_VERSION: ${{ steps.plan.outputs.target_version }}
         run: |
           release_sha="${PREPARED_SHA:-$RESUMED_SHA}"
           current_main_sha="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq .sha)"

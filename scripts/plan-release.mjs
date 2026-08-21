@@ -6,17 +6,15 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import {
   assertNextVersion,
   compareVersions,
-  parseVersion,
   releaseVersionFromSources,
+  resolveReleaseTarget,
 } from "./release-support.mjs";
 
 const projectRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "..",
 );
-export async function planRelease(targetVersion, { root = projectRoot } = {}) {
-  parseVersion(targetVersion);
-
+export async function planRelease(selection, { root = projectRoot } = {}) {
   const packageJson = JSON.parse(
     await readFile(path.join(root, "package.json"), "utf8"),
   );
@@ -32,6 +30,7 @@ export async function planRelease(targetVersion, { root = projectRoot } = {}) {
     packageLock,
     versionSource,
   );
+  const targetVersion = resolveReleaseTarget(currentVersion, selection);
   const comparison = compareVersions(targetVersion, currentVersion);
 
   if (comparison < 0) {
