@@ -1,9 +1,9 @@
-<!-- Phase: Phase 17 collection iteration -->
+<!-- Phase: Phase 18 counted loops -->
 <!-- Document ID: syntax-collections -->
-<!-- Version: 12 -->
+<!-- Version: 13 -->
 <!-- Status: Active -->
 <!-- Authority: Accepted string- and collection-specific Vulci syntax -->
-<!-- Supersedes: syntax-collections v11 -->
+<!-- Supersedes: syntax-collections v12 -->
 
 # Vulci Collection Syntax Specification
 
@@ -189,6 +189,11 @@ items.add(4).each(item) {
 The receiver expression, parentheses, and braces are required. Prefix forms such
 as `each items ...` are invalid. The parenthesized forms declare loop bindings;
 they do not accept callback expressions or function values.
+
+The following brace-delimited body distinguishes the language-level loop form
+from an ordinary member call. `.each(...) { ... }` is always the loop form.
+`.each(...)` without a body is an ordinary method call and may invoke a
+user-defined struct method named `each`.
 
 A string, list, or set form declares exactly one item binding.
 

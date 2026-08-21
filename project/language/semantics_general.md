@@ -1,9 +1,9 @@
-<!-- Phase: Phase 17 collection iteration -->
+<!-- Phase: Phase 18 counted loops -->
 <!-- Document ID: semantics-general -->
-<!-- Version: 26 -->
+<!-- Version: 27 -->
 <!-- Status: Active -->
 <!-- Authority: Accepted non-collection-specific Vulci semantics -->
-<!-- Supersedes: semantics-general v25 -->
+<!-- Supersedes: semantics-general v26 -->
 
 # Programming Language Semantics Specification
 
@@ -948,5 +948,103 @@ The depth safeguard does not otherwise change repeated-import behaviour.
 
 Running an entry file whose top level contains only declarations runs no
 executable top-level expressions.
+
+---
+
+# 22. Loops — Core
+
+## Integer `.times`
+
+The receiver expression of a `.times` loop is evaluated exactly once before
+receiver validation or body execution. If receiver evaluation fails, the error
+propagates and no index binding, body execution, or later chained operation
+occurs.
+
+The evaluated receiver must be an integer. An ineligible receiver produces
+`E_MEM_TYPE` at the `.times` member. No index binding, body execution, or later
+chained operation occurs.
+
+A positive receiver executes the body exactly that many times. A zero receiver
+executes the body zero times. A negative receiver produces this runtime
+diagnostic at the `.times` member without executing the body or any later
+chained operation:
+
+```text
+E_TIMES_COUNT: '.times' receiver must be zero or greater.
+```
+
+When an index binding is present, it receives successive integer values beginning
+at `0` and ending at one less than the receiver. The binding is populated before
+each body execution and is visible only inside the body. It does not exist in the
+receiver expression or after the `.times` expression.
+
+The index binding may not reuse the name of an already-visible unprefixed local
+variable, parameter, or enclosing loop binding. A `$`-prefixed global and an
+unprefixed index binding remain distinct identifiers. At the top level, the
+unprefixed index name is a temporary loop binding rather than a global variable.
+
+The `.times` body does not create a general variable scope. Reassigning the index
+changes only that binding for the current iteration. It does not alter the
+iteration count or sequence, and the next iteration supplies the correct next
+index. These rules do not decide future closure-capture identity.
+
+After ordinary completion or a `break` targeting the `.times` loop, `.times`
+evaluates to its unchanged integer receiver. The result of each individual body
+execution is discarded. A zero receiver and an empty body produce the same
+unchanged receiver result. Later operations chained after the body execute after
+ordinary completion or `break`.
+
+A `return` inside the body immediately exits the enclosing function or method.
+A runtime error immediately stops iteration and propagates normally. In either
+case, the `.times` expression does not produce its receiver and no later chained
+operation executes.
+
+## Condition-Driven `while`
+
+A `while` condition is evaluated before every prospective iteration and must
+produce a Boolean value. Vulci does not use truthiness or implicit conversion for
+`while`. An initially false condition executes the body zero times.
+
+A non-Boolean condition produces this runtime diagnostic at the `while` keyword:
+
+```text
+E_WHILE_COND: 'while' requires a Boolean condition.
+```
+
+The result of each body execution is discarded. After the condition becomes
+false or a `break` targets the `while` loop, the expression evaluates to `null`.
+A `return` or runtime error immediately exits the loop and propagates normally.
+
+## `break`
+
+A bare `break` exits the nearest lexically enclosing language-level loop without
+crossing a function or method boundary. A top-level `break` may therefore target
+a top-level loop. A nested loop consumes its own `break`; the control does not
+also exit an outer loop.
+
+Using `break` without such an enclosing loop is invalid even when the expression
+would not execute. It produces this diagnostic at the `break` keyword:
+
+```text
+E_BREAK_CONTEXT: 'break' can only be used inside a loop.
+```
+
+An expression after an unconditional `break` in the same block is invalid. The
+diagnostic points to that expression:
+
+```text
+Unreachable expression after unconditional break.
+```
+
+Break values, labeled loop control, and `continue` remain deferred.
+
+## Future Contextual `loop` Value
+
+The accepted future language includes a contextual value named `loop` inside
+every language-level loop body, with accepted `prev` and `next` member names.
+
+Phase 18 does not provide this value. Its exact values, boundary behaviour,
+receiver-capability rules, nesting rules, remaining context members, and future
+implementation phase remain deferred in the Decision Register.
 
 ---

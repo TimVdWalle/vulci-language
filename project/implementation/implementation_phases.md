@@ -1,9 +1,9 @@
-<!-- Phase: Phase 17 collection iteration -->
+<!-- Phase: Phase 18 counted loops -->
 <!-- Document ID: implementation-phases -->
-<!-- Version: 21 -->
+<!-- Version: 22 -->
 <!-- Status: Active -->
 <!-- Authority: Implementation order, phase scope, dependencies, and completion criteria -->
-<!-- Supersedes: implementation-phases v20 -->
+<!-- Supersedes: implementation-phases v21 -->
 
 # Implementation Phases
 
@@ -452,9 +452,32 @@ coverage before collection work begins.
 
 ## `ph18` Loops — Core
 
-**Design-blocked:** Loop syntax and semantics must be agreed first.
-
-- Basic looping construct
+- Receiver-attached integer `.times() { ... }` counted repetition
+- Optional zero-based, untyped `.times(index) { ... }` index binding
+- Following-body disambiguation between language-level `.times` and `.each`
+  loops and ordinary same-named method calls
+- Exactly-once `.times` receiver evaluation and `E_MEM_TYPE` for an ineligible
+  receiver
+- Positive receivers execute exactly that many iterations; zero executes none;
+  negative receivers produce `E_TIMES_COUNT`
+- Loop-local `.times` index scope, no binding shadowing, current-iteration
+  reassignment, top-level temporary binding support, and no general body scope
+- Condition-driven `while (condition) { ... }` with required Boolean conditions
+  and a `null` result
+- Empty `.times`, `while`, and `each` bodies
+- Bare `break` for `each`, `.times`, and `while`, targeting the innermost
+  lexically enclosing loop without crossing a function or method boundary
+- Reject expressions after an unconditional `break` in the same block
+- Return the unchanged receiver from `.times` and `each` after ordinary
+  completion or `break`; discard individual body results and permit later
+  chaining
+- Propagate `return` and runtime errors immediately through active loops
+- `E_TIMES_COUNT`, `E_WHILE_COND`, and `E_BREAK_CONTEXT` diagnostics with the
+  accepted wording and source locations
+- Keep `continue`, `do...while`, break values, labeled loop control, and the
+  contextual `loop` value deferred
+- Lexer, parser, AST, evaluator, scope, diagnostic, regression, coverage, and
+  smoke tests for the accepted Phase 18 behaviour
 
 **Result:** Repetitive work is possible without recursion.
 
@@ -674,7 +697,7 @@ concrete numbered phases:
 - Exact anonymous-function syntax
 - Capabilities system
 - Pattern matching for runtime collection types
-- Contextual loop metadata and nested-loop behaviour
+- Remaining contextual loop semantics and advanced nested-loop behaviour
 - Future or user-defined collection types
 
 **Result:** Deferred collection work remains visible until its exact design and

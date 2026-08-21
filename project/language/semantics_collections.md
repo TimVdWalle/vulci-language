@@ -1,9 +1,9 @@
-<!-- Phase: Phase 17 collection iteration -->
+<!-- Phase: Phase 18 counted loops -->
 <!-- Document ID: semantics-collections -->
-<!-- Version: 13 -->
+<!-- Version: 14 -->
 <!-- Status: Active -->
 <!-- Authority: Accepted string and collection semantics -->
-<!-- Supersedes: semantics-collections v12 -->
+<!-- Supersedes: semantics-collections v13 -->
 
 # Collection Semantics Specification
 
@@ -620,12 +620,14 @@ variables. At the top level, ordinary variable assignment still requires a
 
 ## Result and Chaining
 
-After normal completion, `each` evaluates to its unchanged receiver value. The
-result of each individual body execution is discarded. The same receiver result
-is produced for an empty receiver and for an empty body.
+After ordinary completion or a `break` targeting the `each` loop, `each`
+evaluates to its unchanged receiver value. The result of each individual body
+execution is discarded. The same receiver result is produced for an empty
+receiver and for an empty body.
 
 Because `each` produces its receiver, it is not terminal: later operations may be
-chained after its body.
+chained after its body. Those operations execute after ordinary completion or a
+`break` targeting the `each` loop.
 
 If evaluation exits through `return` or a runtime error, the `each` expression
 does not complete normally and no later chained operation executes.
@@ -638,8 +640,12 @@ executed. `return` at the top level remains invalid.
 
 A runtime error in the body immediately stops traversal and propagates normally.
 
-Phase 17 does not accept `break` or `continue`. Those controls remain invalid and
-may be designed consistently with general loops in a later phase.
+A bare `break` targeting the `each` loop immediately stops traversal. The `each`
+expression then produces its unchanged receiver under the result and chaining
+rules above. A `break` consumed by a nested loop does not stop the enclosing
+`each` traversal.
+
+`continue`, break values, and labeled loop control remain deferred.
 
 ## Nested `each`
 
@@ -648,8 +654,8 @@ follows the same receiver, traversal, binding, result, and control-flow rules
 independently. Because binding shadowing is invalid, nested loops use distinct
 binding names.
 
-Contextual loop metadata such as an iteration index, loop depth, or parent-loop
-reference is not accepted. Advanced nested-loop behaviour remains deferred.
+Nested-loop behaviour beyond ordinary independent nesting and the accepted
+innermost-loop `break` targeting remains deferred.
 
 ---
 
