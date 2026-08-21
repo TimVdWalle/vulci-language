@@ -20,7 +20,8 @@ unattended release flow.
 1. `SETUP-TOKEN-1` — In GitHub account settings, create a fine-grained personal
    access token for only `TimVdWalle/vulci-language`.
 2. `SETUP-TOKEN-2` — Give it repository permissions **Actions: Read and write**,
-   **Contents: Read and write**, and **Pull requests: Read and write**.
+   **Contents: Read and write**, **Pull requests: Read and write**, and
+   **Workflows: Read and write**.
 3. `SETUP-TOKEN-3` — In this repository, open **Settings → Secrets and variables
    → Actions**, create the repository secret `RELEASE_TOKEN`, and paste the
    token as its value.
@@ -40,8 +41,9 @@ unattended release flow.
 
 Merge every code, documentation, and feature change into `main` through its own
 pull request before starting a release. The automated release pull request may
-change only mechanical release files: currently `package.json`,
-`package-lock.json`, and `src/version.ts`.
+change only mechanical release files: currently
+`.github/workflows/release-version.yml`, `package.json`, `package-lock.json`,
+and `src/version.ts`.
 
 ### `RELEASE-1` — Start the workflow
 
@@ -49,16 +51,16 @@ change only mechanical release files: currently `package.json`,
    [Release version workflow](https://github.com/TimVdWalle/vulci-language/actions/workflows/release-version.yml).
 2. `RELEASE-START-2` — Select **Run workflow** and keep the branch set to
    `main`.
-3. `RELEASE-START-3` — Select `major`, `minor`, or `patch` from the release
-   dropdown. Select `current` only to recover the release already on `main`
-   after a publishing failure.
+3. `RELEASE-START-3` — Select the displayed `major`, `minor`, or `patch`
+   version from the release dropdown. Select the displayed `current` version
+   only to recover the release already on `main` after a publishing failure.
 4. `RELEASE-START-4` — Select **Run workflow**. No later approval, merge, local
    command, or second workflow run is required.
 
-The workflow resolves the dropdown against the version currently on `main`.
-From `0.19.0`, `patch` resolves to `0.19.1`, `minor` to `0.20.0`, and `major`
-to `1.0.0`. The `current` choice resolves to `0.19.0` and is accepted only as a
-strictly validated recovery attempt.
+From `0.19.0`, the dropdown displays `0.19.0 (current)`, `1.0.0 (major)`,
+`0.20.0 (minor)`, and `0.19.1 (patch)`. Each release refreshes these values for
+the next run. The current version is accepted only as a strictly validated
+recovery attempt.
 
 ### `RELEASE-2` — Automated readiness and release pull request
 
@@ -73,7 +75,7 @@ The workflow performs these guarded operations:
 - `RELEASE-GATE-4` — Rejects conflicting release pull requests, tags, releases,
   or unexpected files.
 - `RELEASE-GATE-5` — Creates or safely recovers `release/v<version>`, updates
-  only the three release files, and opens the pull request. After rebasing an
+  only the four release files, and opens the pull request. After rebasing an
   existing release branch, it waits up to two minutes for GitHub's pull-request
   head to synchronize. A legacy PR authored by `github-actions[bot]` is closed
   and replaced once under `RELEASE_TOKEN` so it cannot retain an
@@ -218,7 +220,7 @@ version` again with the same target.
 - `FAIL-COMMAND-3` — If `gh` is unavailable or unauthenticated, install GitHub
   CLI and run `gh auth login` before retrying the prepare stage.
 - `FAIL-COMMAND-4` — If a check fails after the release branch is created, the
-  command leaves the three version-file changes visible for diagnosis. Do not
+  command leaves the four release-file changes visible for diagnosis. Do not
   tag that branch.
 - `FAIL-COMMAND-5` — If pushing succeeded but pull-request creation failed, run
   `gh pr create --base main --head release/v<version>` after fixing GitHub CLI.

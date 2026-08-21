@@ -10,6 +10,7 @@ import {
   parseVersion,
   releaseVersionFromSources,
   replaceCliVersion,
+  replaceReleaseWorkflowOptions,
 } from "../scripts/release-support.mjs";
 import { createReleaseFixture as createFixture } from "./helpers/release-fixture.js";
 
@@ -31,6 +32,24 @@ test("validates, compares, and replaces release versions", () => {
     /package\.json is 0\.15\.0/,
   );
   assert.throws(() => replaceCliVersion("", "0.16.0", "0.17.0"), /declare/);
+
+  const workflow = [
+    "        # RELEASE_VERSION_OPTIONS_START",
+    "        options:",
+    "          - 0.16.0 (current)",
+    "          - 1.0.0 (major)",
+    "          - 0.17.0 (minor)",
+    "          - 0.16.1 (patch)",
+    "        # RELEASE_VERSION_OPTIONS_END",
+  ].join("\n");
+  assert.match(
+    replaceReleaseWorkflowOptions(workflow, "0.16.0", "0.17.0"),
+    /0\.17\.0 \(current\)[\s\S]*1\.0\.0 \(major\)[\s\S]*0\.18\.0 \(minor\)[\s\S]*0\.17\.1 \(patch\)/,
+  );
+  assert.throws(
+    () => replaceReleaseWorkflowOptions(workflow, "0.15.0", "0.17.0"),
+    /do not match current version/,
+  );
 
   const packageJson = { version: "0.17.0" };
   const packageLock = {
@@ -74,12 +93,19 @@ test("prepares a version-only branch, commit, push, and pull request", () => {
       readFileSync(path.join(fixture.root, "src", "version.ts"), "utf8"),
       /VULCI_VERSION = "0\.17\.0"/,
     );
+    assert.match(
+      readFileSync(
+        path.join(fixture.root, ".github", "workflows", "release-version.yml"),
+        "utf8",
+      ),
+      /0\.17\.0 \(current\)[\s\S]*0\.17\.1 \(patch\)/,
+    );
     assert.ok(fixture.calls.includes("git switch -c release/v0.17.0"));
     assert.ok(fixture.calls.includes("npm run check"));
     assert.ok(fixture.calls.includes("npm run coverage"));
     assert.ok(
       fixture.calls.includes(
-        "git add package.json package-lock.json src/version.ts",
+        "git add .github/workflows/release-version.yml package.json package-lock.json src/version.ts",
       ),
     );
     assert.ok(

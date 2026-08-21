@@ -2,7 +2,7 @@
 # Maintainer guide: .github/RELEASING.md
 
 name: Release version
-run-name: Release Vulci (${{ inputs.version }})
+run-name: Release Vulci — ${{ inputs.version }}
 
 on:
   workflow_dispatch:
@@ -11,11 +11,13 @@ on:
         description: Release the current version again or select the next SemVer step
         required: true
         type: choice
+        # RELEASE_VERSION_OPTIONS_START
         options:
-          - current
-          - major
-          - minor
-          - patch
+          - 0.17.1 (current)
+          - 1.0.0 (major)
+          - 0.18.0 (minor)
+          - 0.17.2 (patch)
+        # RELEASE_VERSION_OPTIONS_END
 
 concurrency:
   group: vulci-release
@@ -185,7 +187,7 @@ jobs:
           fi
 
           node scripts/verify-release-version.mjs "v$TARGET_VERSION"
-          expected_files=$'package-lock.json\npackage.json\nsrc/version.ts'
+          expected_files=$'.github/workflows/release-version.yml\npackage-lock.json\npackage.json\nsrc/version.ts'
           merge_base="$(git merge-base "$INITIAL_MAIN_SHA" HEAD)"
           commit_count="$(git rev-list --count "$merge_base"..HEAD)"
           changed_files="$(git diff --name-only "$merge_base"...HEAD | sort)"
@@ -399,8 +401,9 @@ jobs:
             gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$pr_number/files" \
               --jq '.[].filename' | sort
           )"
-          expected_files=$'package-lock.json\npackage.json\nsrc/version.ts'
-          if [[ "$changed_files" != "$expected_files" ]]; then
+          expected_files=$'.github/workflows/release-version.yml\npackage-lock.json\npackage.json\nsrc/version.ts'
+          legacy_expected_files=$'package-lock.json\npackage.json\nsrc/version.ts'
+          if [[ "$changed_files" != "$expected_files" && "$changed_files" != "$legacy_expected_files" ]]; then
             echo "Release pull request #$pr_number contains unexpected files." >&2
             echo "$changed_files" >&2
             exit 1

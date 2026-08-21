@@ -27,22 +27,65 @@ export function compareVersions(left, right) {
   return 0;
 }
 
-export function resolveReleaseTarget(currentVersion, selection) {
+export function releaseTargets(currentVersion) {
   const [major, minor, patch] = parseVersion(currentVersion);
 
-  switch (selection) {
-    case "current":
-      return currentVersion;
-    case "major":
-      return `${major + 1n}.0.0`;
-    case "minor":
-      return `${major}.${minor + 1n}.0`;
-    case "patch":
-      return `${major}.${minor}.${patch + 1n}`;
-    default:
-      parseVersion(selection);
-      return selection;
+  return {
+    current: currentVersion,
+    major: `${major + 1n}.0.0`,
+    minor: `${major}.${minor + 1n}.0`,
+    patch: `${major}.${minor}.${patch + 1n}`,
+  };
+}
+
+export function resolveReleaseTarget(currentVersion, selection) {
+  const labeledChoice = /^(.+) \((current|major|minor|patch)\)$/.exec(
+    selection ?? "",
+  );
+
+  if (labeledChoice === null) {
+    parseVersion(selection);
+    return selection;
   }
+
+  const [, selectedVersion, releaseType] = labeledChoice;
+  const expectedVersion = releaseTargets(currentVersion)[releaseType];
+  if (selectedVersion !== expectedVersion) {
+    throw new Error(
+      `Release choice ${selection} is stale; expected ${expectedVersion} (${releaseType}) for current version ${currentVersion}.`,
+    );
+  }
+
+  return selectedVersion;
+}
+
+function releaseWorkflowOptions(version) {
+  return Object.entries(releaseTargets(version))
+    .map(([releaseType, targetVersion]) => {
+      return `          - ${targetVersion} (${releaseType})`;
+    })
+    .join("\n");
+}
+
+export function replaceReleaseWorkflowOptions(
+  source,
+  currentVersion,
+  targetVersion,
+) {
+  const start = "        # RELEASE_VERSION_OPTIONS_START\n        options:\n";
+  const end = "\n        # RELEASE_VERSION_OPTIONS_END";
+  const currentOptions = `${start}${releaseWorkflowOptions(currentVersion)}${end}`;
+
+  if (!source.includes(currentOptions)) {
+    throw new Error(
+      `Release workflow choices do not match current version ${currentVersion}.`,
+    );
+  }
+
+  return source.replace(
+    currentOptions,
+    `${start}${releaseWorkflowOptions(targetVersion)}${end}`,
+  );
 }
 
 export function assertNextVersion(currentVersion, targetVersion) {
