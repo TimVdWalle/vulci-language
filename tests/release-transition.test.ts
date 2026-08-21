@@ -58,26 +58,42 @@ test("plans a new release or a safe retry from aligned version sources", async (
       state: "resume",
       targetVersion: "0.19.0",
     });
-    assert.deepEqual(await planRelease("current", { root: fixture.root }), {
-      currentVersion: "0.19.0",
-      state: "resume",
-      targetVersion: "0.19.0",
-    });
-    assert.deepEqual(await planRelease("major", { root: fixture.root }), {
-      currentVersion: "0.19.0",
-      state: "prepare",
-      targetVersion: "1.0.0",
-    });
-    assert.deepEqual(await planRelease("minor", { root: fixture.root }), {
-      currentVersion: "0.19.0",
-      state: "prepare",
-      targetVersion: "0.20.0",
-    });
-    assert.deepEqual(await planRelease("patch", { root: fixture.root }), {
-      currentVersion: "0.19.0",
-      state: "prepare",
-      targetVersion: "0.19.1",
-    });
+    assert.deepEqual(
+      await planRelease("0.19.0 (current)", { root: fixture.root }),
+      {
+        currentVersion: "0.19.0",
+        state: "resume",
+        targetVersion: "0.19.0",
+      },
+    );
+    assert.deepEqual(
+      await planRelease("1.0.0 (major)", { root: fixture.root }),
+      {
+        currentVersion: "0.19.0",
+        state: "prepare",
+        targetVersion: "1.0.0",
+      },
+    );
+    assert.deepEqual(
+      await planRelease("0.20.0 (minor)", { root: fixture.root }),
+      {
+        currentVersion: "0.19.0",
+        state: "prepare",
+        targetVersion: "0.20.0",
+      },
+    );
+    assert.deepEqual(
+      await planRelease("0.19.1 (patch)", { root: fixture.root }),
+      {
+        currentVersion: "0.19.0",
+        state: "prepare",
+        targetVersion: "0.19.1",
+      },
+    );
+    await assert.rejects(
+      planRelease("0.19.2 (patch)", { root: fixture.root }),
+      /choice .* is stale/,
+    );
     await assert.rejects(
       planRelease("0.18.0", { root: fixture.root }),
       /older than current version/,

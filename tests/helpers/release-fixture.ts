@@ -26,6 +26,7 @@ interface FixtureOptions {
 }
 
 export function writeVersions(root: string, version: string): void {
+  mkdirSync(path.join(root, ".github", "workflows"), { recursive: true });
   writeFileSync(
     path.join(root, "package.json"),
     `${JSON.stringify({ name: "vulci", version }, null, 2)}\n`,
@@ -45,6 +46,27 @@ export function writeVersions(root: string, version: string): void {
   writeFileSync(
     path.join(root, "src", "version.ts"),
     `// Phase 16\n\nexport const VULCI_VERSION = "${version}";\n`,
+  );
+  const [major = "0", minor = "0", patch = "0"] = version.split(".");
+  writeFileSync(
+    path.join(root, ".github", "workflows", "release-version.yml"),
+    [
+      "# Phase 16",
+      "",
+      "on:",
+      "  workflow_dispatch:",
+      "    inputs:",
+      "      version:",
+      "        type: choice",
+      "        # RELEASE_VERSION_OPTIONS_START",
+      "        options:",
+      `          - ${version} (current)`,
+      `          - ${BigInt(major) + 1n}.0.0 (major)`,
+      `          - ${major}.${BigInt(minor) + 1n}.0 (minor)`,
+      `          - ${major}.${minor}.${BigInt(patch) + 1n} (patch)`,
+      "        # RELEASE_VERSION_OPTIONS_END",
+      "",
+    ].join("\n"),
   );
 }
 
@@ -122,7 +144,7 @@ export function createReleaseFixture(options: FixtureOptions) {
       return result(
         0,
         options.changedFiles ??
-          "package-lock.json\npackage.json\nsrc/version.ts\n",
+          ".github/workflows/release-version.yml\npackage-lock.json\npackage.json\nsrc/version.ts\n",
       );
     }
     if (command === "git" && arguments_[0] === "rev-list") {

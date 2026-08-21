@@ -23,7 +23,7 @@ test("coordinates a guarded one-start release", () => {
   assert.match(workflow, /type: choice/);
   assert.match(
     workflow,
-    /options:\n\s+- current\n\s+- major\n\s+- minor\n\s+- patch/,
+    /options:\n\s+- 0\.17\.1 \(current\)\n\s+- 1\.0\.0 \(major\)\n\s+- 0\.18\.0 \(minor\)\n\s+- 0\.17\.2 \(patch\)/,
   );
   assert.doesNotMatch(workflow, /type: string/);
   assert.match(

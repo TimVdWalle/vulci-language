@@ -15,6 +15,7 @@ import {
   refExists,
   remoteRefExists,
   replaceCliVersion,
+  replaceReleaseWorkflowOptions,
   versionAtRef,
 } from "./release-support.mjs";
 
@@ -22,7 +23,12 @@ const projectRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "..",
 );
-const releaseFiles = ["package.json", "package-lock.json", "src/version.ts"];
+const releaseFiles = [
+  ".github/workflows/release-version.yml",
+  "package.json",
+  "package-lock.json",
+  "src/version.ts",
+];
 
 function verifyReleaseFiles(run, root, version) {
   run(process.execPath, [
@@ -68,6 +74,21 @@ function prepareRelease({ log, root, run, version }) {
     versionFile,
     replaceCliVersion(
       readFileSync(versionFile, "utf8"),
+      currentVersion,
+      version,
+    ),
+  );
+
+  const releaseWorkflowFile = path.join(
+    root,
+    ".github",
+    "workflows",
+    "release-version.yml",
+  );
+  writeFileSync(
+    releaseWorkflowFile,
+    replaceReleaseWorkflowOptions(
+      readFileSync(releaseWorkflowFile, "utf8"),
       currentVersion,
       version,
     ),
