@@ -49,14 +49,16 @@ change only mechanical release files: currently `package.json`,
    [Release version workflow](https://github.com/TimVdWalle/vulci-language/actions/workflows/release-version.yml).
 2. `RELEASE-START-2` — Select **Run workflow** and keep the branch set to
    `main`.
-3. `RELEASE-START-3` — Enter the version without `v`, such as `0.18.0`.
+3. `RELEASE-START-3` — Select `major`, `minor`, or `patch` from the release
+   dropdown. Select `current` only to recover the release already on `main`
+   after a publishing failure.
 4. `RELEASE-START-4` — Select **Run workflow**. No later approval, merge, local
    command, or second workflow run is required.
 
-The target must be exactly one permitted stable SemVer step. From `0.19.0`, the
-only valid versions are `0.19.1`, `0.20.0`, and `1.0.0`. Skipped versions,
-older versions, and prerelease syntax are rejected. Repeating the current
-version is accepted only as a strictly validated recovery attempt.
+The workflow resolves the dropdown against the version currently on `main`.
+From `0.19.0`, `patch` resolves to `0.19.1`, `minor` to `0.20.0`, and `major`
+to `1.0.0`. The `current` choice resolves to `0.19.0` and is accepted only as a
+strictly validated recovery attempt.
 
 ### `RELEASE-2` — Automated readiness and release pull request
 

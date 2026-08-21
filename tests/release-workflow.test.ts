@@ -20,6 +20,16 @@ test("coordinates a guarded one-start release", () => {
 
   assert.match(workflow, /workflow_dispatch:/);
   assert.match(workflow, /version:\n\s+description:/);
+  assert.match(workflow, /type: choice/);
+  assert.match(
+    workflow,
+    /options:\n\s+- current\n\s+- major\n\s+- minor\n\s+- patch/,
+  );
+  assert.doesNotMatch(workflow, /type: string/);
+  assert.match(
+    workflow,
+    /TARGET_VERSION:.*steps\.plan\.outputs\.target_version/,
+  );
   assert.match(workflow, /group: vulci-release/);
   assert.match(workflow, /cancel-in-progress: false/);
   assert.match(workflow, /actions: write/);

@@ -27,6 +27,24 @@ export function compareVersions(left, right) {
   return 0;
 }
 
+export function resolveReleaseTarget(currentVersion, selection) {
+  const [major, minor, patch] = parseVersion(currentVersion);
+
+  switch (selection) {
+    case "current":
+      return currentVersion;
+    case "major":
+      return `${major + 1n}.0.0`;
+    case "minor":
+      return `${major}.${minor + 1n}.0`;
+    case "patch":
+      return `${major}.${minor}.${patch + 1n}`;
+    default:
+      parseVersion(selection);
+      return selection;
+  }
+}
+
 export function assertNextVersion(currentVersion, targetVersion) {
   const [currentMajor, currentMinor, currentPatch] =
     parseVersion(currentVersion);
