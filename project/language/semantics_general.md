@@ -1,9 +1,9 @@
-<!-- Phase: Phase 18 counted loops -->
+<!-- Phase: Phase 19 environment access -->
 <!-- Document ID: semantics-general -->
-<!-- Version: 27 -->
+<!-- Version: 30 -->
 <!-- Status: Active -->
 <!-- Authority: Accepted non-collection-specific Vulci semantics -->
-<!-- Supersedes: semantics-general v26 -->
+<!-- Supersedes: semantics-general v29 -->
 
 # Programming Language Semantics Specification
 
@@ -1046,5 +1046,58 @@ every language-level loop body, with accepted `prev` and `next` member names.
 Phase 18 does not provide this value. Its exact values, boundary behaviour,
 receiver-capability rules, nesting rules, remaining context members, and future
 implementation phase remain deferred in the Decision Register.
+
+---
+
+# 23. Environment Access — Standard Library
+
+`env` and `reloadEnv` are predeclared standard-library functions in the shared
+value namespace. A user function, struct, enum, or ordinary unprefixed variable
+may not reuse either name. `$env` and `$reloadEnv` remain distinct global-variable
+names.
+
+`env` has a required string `name` parameter and an optional string `fallback`
+parameter:
+
+```text
+env(name)
+env(name, fallback: fallback)
+```
+
+The required `name` argument may be positional or named. When supplied, the
+optional `fallback` argument must be named. The `name` argument must match
+`[A-Za-z_][A-Za-z0-9_]*`. An empty or invalid name produces `E_ENV_NAME` at the
+name argument. A wrong argument count produces `E_ARG_COUNT`, and a non-string
+name or fallback produces `E_ARG_TYPE`.
+
+`env(name)` produces the string value of a present environment variable or
+`null` when that variable is absent. `env(name, fallback: fallback)` produces
+the present string value or the supplied string fallback when the variable is
+absent. A present empty string is a value and is therefore distinct from absence.
+
+Vulci reads an initial read-only execution-environment snapshot before the entry
+program begins. Every source file in that program, including imported files,
+observes the current snapshot. A program cannot enumerate or directly mutate it.
+
+`reloadEnv()` accepts no arguments and produces `null`. A wrong argument count
+produces `E_ARG_COUNT`. It re-reads the entry-adjacent `.env` file and, after a
+successful complete read and parse, atomically replaces the current snapshot.
+The host-environment layer remains the one captured at program startup and
+continues to take precedence. An absent or deleted `.env` file contributes no
+file entries after reload.
+
+If reloading produces `E_ENV_FILE_READ` or `E_ENV_FILE_FORMAT`, the current
+snapshot remains unchanged. `reloadEnv()` does not watch for changes or refresh
+the host environment.
+
+Environment-variable name comparison follows the host platform's environment
+behaviour. Portable programs should use one consistent uppercase spelling.
+
+Environment values are strings. Their contents are not implicitly converted;
+the accepted explicit string conversions apply when required.
+
+The stable environment-access diagnostic code is:
+
+- `E_ENV_NAME` — an environment variable name is empty or invalid
 
 ---

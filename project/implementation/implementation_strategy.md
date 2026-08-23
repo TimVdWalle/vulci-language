@@ -1,9 +1,9 @@
-<!-- Phase: Phase 15B CLI, distribution, and quality hardening -->
+<!-- Phase: Phase 19 environment access -->
 <!-- Document ID: implementation-strategy -->
-<!-- Version: 6 -->
+<!-- Version: 9 -->
 <!-- Status: Active -->
 <!-- Authority: Reference-interpreter architecture, mechanics, and temporary constraints -->
-<!-- Supersedes: implementation-strategy v5 -->
+<!-- Supersedes: implementation-strategy v8 -->
 
 # Implementation Strategy
 
@@ -159,6 +159,49 @@ Help and debug output use consistent colour only when their output stream is an
 interactive terminal that supports it. `--no-color` and a non-empty `NO_COLOR`
 environment variable disable colour. Plain output remains stable for redirection,
 tests, and other tools.
+
+### `impl-cli-002` — Phase 19 execution environment
+
+After resolving the entry source file and before evaluating the program, the
+reference CLI captures an immutable host-environment layer. It reads an optional
+UTF-8 `.env` file in the entry file's directory, then combines its entries with
+that host layer to create the initial execution-environment snapshot. An absent
+`.env` file is ignored. A host entry, including one with an empty value, takes
+precedence over an entry with the same name in `.env`.
+
+The CLI does not search parent directories, load profile-specific `.env.*`
+files, or expand values. It passes the resulting read-only snapshot to the
+environment-access standard-library function; it does not expose that snapshot
+as Vulci's lexical `Environment` or as a mutable Vulci value. Tests and embedded
+uses supply an explicit host-environment record so that they never depend on the
+developer or CI process environment.
+
+The `reloadEnv()` built-in re-reads only the entry-adjacent `.env` file. It must
+fully read and parse the new file, combine it with the immutable startup host
+layer, and replace the active snapshot only after those steps succeed. An absent
+or deleted `.env` file contributes an empty file layer. A read or format failure
+leaves the previously active snapshot unchanged.
+
+The `.env` format is a flat dotenv file, not YAML or nested configuration. It
+must be valid UTF-8 and may use LF or CRLF line endings; invalid encoding
+produces `E_ENV_FILE_FORMAT`. Empty or whitespace-only lines are ignored. A
+line whose first non-whitespace character is `#` is a comment.
+
+Every other line is an entry split at its first `=`. The exact, unspaced name
+before that delimiter must match the accepted environment-variable-name rule.
+An empty value is valid. An unquoted value is all text after the delimiter,
+preserved exactly, including whitespace, `#`, and further `=` characters.
+Single- and double-quoted values must begin immediately after the delimiter and
+close with the same quote on that line without trailing text; their delimiters
+are removed. Escapes, multiline values, inline comments, and variable expansion
+are not accepted.
+
+Duplicate detection follows the host platform's environment-variable
+name-comparison behaviour.
+
+An existing but unreadable `.env` file produces `E_ENV_FILE_READ`. A malformed
+line or duplicate name produces `E_ENV_FILE_FORMAT` at the relevant `.env`
+line. These CLI diagnostics must not expose the file's environment values.
 
 ### `impl-dist-001` — Standalone macOS executables
 
