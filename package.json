@@ -1,6 +1,6 @@
 {
   "name": "vulci",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "private": true,
   "description": "The reference interpreter for the Vulci programming language.",
   "type": "module",
