@@ -1,4 +1,4 @@
-// Phase 17
+// Phase 18
 
 import {
   EnumDeclaration,
@@ -79,11 +79,11 @@ export abstract class FunctionEvaluator extends CallExecutor {
       });
     }
 
-    const eachValue = this.eachBindingValue(expression.callee);
+    const loopValue = this.loopBindingValue(expression.callee);
 
-    if (eachValue !== undefined) {
-      if (eachValue.type === "NativeFunction") {
-        return this.callNativeFunction(eachValue, expression);
+    if (loopValue !== undefined) {
+      if (loopValue.type === "NativeFunction") {
+        return this.callNativeFunction(loopValue, expression);
       }
 
       throw new Error(

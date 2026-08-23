@@ -1,4 +1,4 @@
-// Phase 17
+// Phase 18
 
 import { Expression, Program } from "../ast.js";
 import { Token } from "../token.js";
@@ -131,6 +131,28 @@ function findExpressionConflict(
       );
     }
 
+    case "TimesExpression":
+      if (
+        expression.binding !== null &&
+        enumNames.has(expression.binding.lexeme)
+      ) {
+        return {
+          name: expression.binding.lexeme,
+          token: expression.binding,
+        };
+      }
+
+      return (
+        findExpressionConflict(expression.receiver, enumNames) ??
+        findExpressionListConflict(expression.expressions, enumNames)
+      );
+
+    case "WhileExpression":
+      return (
+        findExpressionConflict(expression.condition, enumNames) ??
+        findExpressionListConflict(expression.expressions, enumNames)
+      );
+
     case "IndexExpression":
       return (
         findExpressionConflict(expression.target, enumNames) ??
@@ -170,6 +192,7 @@ function findExpressionConflict(
         ? null
         : findExpressionConflict(expression.value, enumNames);
 
+    case "BreakExpression":
     case "IntegerLiteral":
     case "BooleanLiteral":
     case "NullLiteral":

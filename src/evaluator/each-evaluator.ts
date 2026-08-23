@@ -1,12 +1,14 @@
-// Phase 17
+// Phase 18
 
-import { EachBinding, EachExpression } from "../ast.js";
+import { EachExpression } from "../ast.js";
 import { createStringValue, graphemesOf } from "../graphemes.js";
 import { RuntimeValue } from "../runtime-value.js";
-import { StructEvaluator } from "./struct-evaluator.js";
+import { BreakSignal } from "./break-signal.js";
+import { ActiveLoopBinding } from "./evaluator-context.js";
+import { LoopEvaluator } from "./loop-evaluator.js";
 import { copyRuntimeValue } from "./value-copy.js";
 
-export abstract class EachEvaluator extends StructEvaluator {
+export abstract class EachEvaluator extends LoopEvaluator {
   protected evaluateEachExpression(expression: EachExpression): RuntimeValue {
     const receiver = this.evaluateExpression(expression.receiver);
     const location = `${expression.keyword.line}:${expression.keyword.column}`;
@@ -24,13 +26,10 @@ export abstract class EachEvaluator extends StructEvaluator {
     }
 
     this.assertBindingCount(expression, receiver);
-    this.assertBindingsAvailable(expression.bindings);
-
-    const bindingScope = this.eachBindingScope();
-
-    for (const binding of expression.bindings) {
-      bindingScope.set(binding.name.lexeme, binding);
-    }
+    const activeBindings: ActiveLoopBinding[] = expression.bindings.map(
+      (binding) => ({ ...binding, kind: "each" }),
+    );
+    this.activateLoopBindings(activeBindings);
 
     try {
       if (receiver.type === "String") {
@@ -46,11 +45,10 @@ export abstract class EachEvaluator extends StructEvaluator {
           this.evaluateEachBody(expression, [item]);
         }
       }
+    } catch (error) {
+      if (!(error instanceof BreakSignal)) throw error;
     } finally {
-      for (const binding of expression.bindings) {
-        this.deleteEachBindingValue(binding.name.lexeme);
-        bindingScope.delete(binding.name.lexeme);
-      }
+      this.deactivateLoopBindings(activeBindings);
     }
 
     return receiver;
@@ -72,34 +70,6 @@ export abstract class EachEvaluator extends StructEvaluator {
         `binding${receiver.type === "Map" ? "s" : ""}, but received ${count}. ` +
         `at ${expression.keyword.line}:${expression.keyword.column}`,
     );
-  }
-
-  private assertBindingsAvailable(bindings: EachBinding[]): void {
-    const bindingScope = this.eachBindingScope();
-    const names = new Set<string>();
-
-    for (const binding of bindings) {
-      const name = binding.name.lexeme;
-      const visibleValue = this.findValue(this.currentEnvironment, name);
-      const visibleLocal =
-        visibleValue !== undefined &&
-        (this.currentEnvironment !== this.environment ||
-          visibleValue.type !== "NativeFunction");
-
-      if (
-        name === "self" ||
-        names.has(name) ||
-        bindingScope.has(name) ||
-        visibleLocal
-      ) {
-        throw new Error(
-          `Each binding '${name}' conflicts with an already-visible binding. ` +
-            `at ${binding.name.line}:${binding.name.column}`,
-        );
-      }
-
-      names.add(name);
-    }
   }
 
   private evaluateEachBody(
@@ -125,7 +95,7 @@ export abstract class EachEvaluator extends StructEvaluator {
 
     for (let index = 0; index < expression.bindings.length; index++) {
       const binding = expression.bindings[index]!;
-      this.defineEachBindingValue(
+      this.defineLoopBindingValue(
         binding.name.lexeme,
         copyRuntimeValue(values[index]!),
       );

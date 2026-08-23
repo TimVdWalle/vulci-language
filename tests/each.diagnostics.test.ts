@@ -1,4 +1,4 @@
-// Phase 17
+// Phase 18
 
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -282,15 +282,15 @@ list[1, 2, 3].each(item) {
   assert.deepEqual(environment.get("$later"), integer(0));
 });
 
-test("keeps return, break, and continue control rules", () => {
+test("keeps return and continue rules while accepting break", () => {
   assert.throws(
     () => evaluate("list[1].each(item) {\n  return item\n}"),
     /'return' can only be used inside a function/,
   );
-  assert.throws(
-    () => evaluate("list[1].each(item) {\n  break\n}"),
-    /Undefined variable 'break'/,
-  );
+  assert.deepEqual(evaluate("list[1].each(item) {\n  break\n}"), {
+    type: "List",
+    items: [integer(1)],
+  });
   assert.throws(
     () => evaluate("list[1].each(item) {\n  continue\n}"),
     /Undefined variable 'continue'/,

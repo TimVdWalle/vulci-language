@@ -1,4 +1,4 @@
-// Phase 17
+// Phase 18
 
 import {
   Expression,
@@ -108,6 +108,18 @@ function collectExpressionTypeAnnotations(
         ...expression.expressions.flatMap(collectExpressionTypeAnnotations),
       ];
 
+    case "TimesExpression":
+      return [
+        ...collectExpressionTypeAnnotations(expression.receiver),
+        ...expression.expressions.flatMap(collectExpressionTypeAnnotations),
+      ];
+
+    case "WhileExpression":
+      return [
+        ...collectExpressionTypeAnnotations(expression.condition),
+        ...expression.expressions.flatMap(collectExpressionTypeAnnotations),
+      ];
+
     case "IndexExpression":
       return [
         ...collectExpressionTypeAnnotations(expression.target),
@@ -145,6 +157,7 @@ function collectExpressionTypeAnnotations(
         ? []
         : collectExpressionTypeAnnotations(expression.value);
 
+    case "BreakExpression":
     case "EnumDeclaration":
     case "IntegerLiteral":
     case "BooleanLiteral":

@@ -1,4 +1,4 @@
-// Phase 15
+// Phase 18
 
 import { Expression } from "../ast.js";
 import { Token, TokenType } from "../token.js";
@@ -12,6 +12,7 @@ export abstract class ParserContext {
   protected readonly knownEnumNames = new Set<string>();
   protected readonly allowUnknownTypeNames: boolean;
   protected current = 0;
+  protected loopDepth = 0;
 
   constructor(
     protected readonly tokens: Token[],
@@ -84,6 +85,59 @@ export abstract class ParserContext {
 
     if (!types.some((type) => this.check(type))) {
       this.current = originalPosition;
+    }
+  }
+
+  protected loopExpressionBlock(bodyName: string): Expression[] {
+    this.skipNewlines();
+    this.consume(TokenType.LeftBrace, `Expected '{' before ${bodyName} body.`);
+    this.skipNewlines();
+
+    const expressions: Expression[] = [];
+    this.loopDepth++;
+
+    try {
+      while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+        const expression = this.expression();
+        expressions.push(expression);
+
+        if (this.check(TokenType.RightBrace)) break;
+
+        if (this.isAtEnd()) {
+          throw this.error(this.peek(), `Expected '}' after ${bodyName} body.`);
+        }
+
+        this.consume(TokenType.Newline, "Expected a newline after expression.");
+        this.skipNewlines();
+
+        if (
+          expression.type === "ReturnExpression" &&
+          !this.check(TokenType.RightBrace)
+        ) {
+          throw this.error(
+            this.peek(),
+            "Unreachable expression after unconditional return.",
+          );
+        }
+
+        if (
+          expression.type === "BreakExpression" &&
+          !this.check(TokenType.RightBrace)
+        ) {
+          throw this.error(
+            this.peek(),
+            "Unreachable expression after unconditional break.",
+          );
+        }
+      }
+
+      this.consume(
+        TokenType.RightBrace,
+        `Expected '}' after ${bodyName} body.`,
+      );
+      return expressions;
+    } finally {
+      this.loopDepth--;
     }
   }
 
@@ -179,8 +233,8 @@ export abstract class ParserContext {
     reportWarning("warning", message, token);
   }
 
-  protected error(token: Token, message: string): Error {
-    return sourceError(token, message);
+  protected error(token: Token, message: string, code?: string): Error {
+    return sourceError(token, message, code);
   }
 }
 

@@ -1,4 +1,4 @@
-// Phase 17
+// Phase 18
 
 import {
   Expression,
@@ -214,6 +214,28 @@ function findExpressionConflict(
       );
     }
 
+    case "TimesExpression":
+      if (
+        expression.binding !== null &&
+        structNames.has(expression.binding.lexeme)
+      ) {
+        return {
+          name: expression.binding.lexeme,
+          token: expression.binding,
+        };
+      }
+
+      return (
+        findExpressionConflict(expression.receiver, structNames) ??
+        findExpressionListConflict(expression.expressions, structNames)
+      );
+
+    case "WhileExpression":
+      return (
+        findExpressionConflict(expression.condition, structNames) ??
+        findExpressionListConflict(expression.expressions, structNames)
+      );
+
     case "IndexExpression":
       return (
         findExpressionConflict(expression.target, structNames) ??
@@ -253,6 +275,7 @@ function findExpressionConflict(
         ? null
         : findExpressionConflict(expression.value, structNames);
 
+    case "BreakExpression":
     case "EnumDeclaration":
     case "IntegerLiteral":
     case "BooleanLiteral":

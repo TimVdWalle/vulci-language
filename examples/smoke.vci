@@ -1,8 +1,8 @@
-// Phase 17
+// Phase 18
 // Expected output: Phase13Counter(value: 15, step: 2)
 //                  Phase14Status.Running
 //                  map["items": list[1, 2, 3]]
-//                  SMOKE OK: 1386
+//                  SMOKE OK: 1404
 
 import 'phase15/imported.vci'
 
@@ -340,6 +340,28 @@ $phase17_score = if (
     and $phase17_map_order == "aAbB"
     and $phase17_chain == list[1, 2]
 ) { 17 } else { 0 }
+$phase18_times = 0
+4.times(index) {
+    if (index == 3) {
+        break
+    }
+    $phase18_times = $phase18_times + index
+}
+$phase18_while = 0
+while ($phase18_while < 3) {
+    $phase18_while = $phase18_while + 1
+}
+$phase18_each = 0
+list[1, 2].each(item) {
+    $phase18_each = $phase18_each + item
+    break
+}
+$phase18_score = if (
+    $phase18_times == 3
+    and $phase18_while == 3
+    and $phase18_each == 1
+    and 2.times() { } == 2
+) { 18 } else { 0 }
 $result = $checksum
     + $existing_boolean_score
     + $existing_null_score
@@ -360,6 +382,7 @@ $result = $checksum
     + $phase15_score
     + $phase16_score
     + $phase17_score
+    + $phase18_score
 print(value: "SMOKE OK: {{$result}}")
 $unused_null = return_null()
 

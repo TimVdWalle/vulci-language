@@ -1,0 +1,22 @@
+// Phase 18
+// Expected output:
+// 0
+// 1
+// 2
+// 3
+// 6
+// 4
+
+$sum = 0
+
+4.times(index) {
+    print(index)
+    $sum = $sum + index
+}
+
+print($sum)
+
+$unchanged = 4.times() {
+}
+
+print($unchanged)

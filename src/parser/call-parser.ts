@@ -1,4 +1,4 @@
-// Phase 17
+// Phase 18
 
 import {
   EachExpression,
@@ -6,26 +6,31 @@ import {
   FunctionCall,
   MemberAccess,
   MemberCall,
+  TimesExpression,
 } from "../ast.js";
 import { Token, TokenType } from "../token.js";
-import { EachParser } from "./each-parser.js";
+import { LoopParser } from "./loop-parser.js";
 
 interface ParsedArguments {
   arguments: Expression[];
   argumentNames: (Token | null)[];
 }
 
-export abstract class CallParser extends EachParser {
+export abstract class CallParser extends LoopParser {
   protected finishMember(
     receiver: Expression,
-  ): MemberAccess | MemberCall | EachExpression {
+  ): MemberAccess | MemberCall | EachExpression | TimesExpression {
     const member = this.consume(
       TokenType.Identifier,
       "Expected member name after '.'.",
     );
 
-    if (member.lexeme === "each") {
+    if (member.lexeme === "each" && this.hasFollowingLoopBody()) {
       return this.finishEachExpression(receiver, member);
+    }
+
+    if (member.lexeme === "times" && this.hasFollowingLoopBody()) {
+      return this.finishTimesExpression(receiver, member);
     }
 
     if (!this.match(TokenType.LeftParen)) {
@@ -102,6 +107,16 @@ export abstract class CallParser extends EachParser {
           this.containsAssignment(expression.receiver) ||
           expression.expressions.some((item) => this.containsAssignment(item))
         );
+      case "TimesExpression":
+        return (
+          this.containsAssignment(expression.receiver) ||
+          expression.expressions.some((item) => this.containsAssignment(item))
+        );
+      case "WhileExpression":
+        return (
+          this.containsAssignment(expression.condition) ||
+          expression.expressions.some((item) => this.containsAssignment(item))
+        );
       case "IndexExpression":
         return (
           this.containsAssignment(expression.target) ||
@@ -149,12 +164,39 @@ export abstract class CallParser extends EachParser {
           expression.methods.some((method) => this.containsAssignment(method))
         );
       case "EnumDeclaration":
+      case "BreakExpression":
       case "IntegerLiteral":
       case "BooleanLiteral":
       case "NullLiteral":
       case "VariableReference":
         return false;
     }
+  }
+
+  private hasFollowingLoopBody(): boolean {
+    if (!this.check(TokenType.LeftParen)) return false;
+
+    let depth = 0;
+
+    for (let index = this.current; index < this.tokens.length; index++) {
+      const token = this.tokens[index]!;
+
+      if (token.type === TokenType.LeftParen) {
+        depth++;
+        continue;
+      }
+
+      if (token.type !== TokenType.RightParen) continue;
+
+      depth--;
+      if (depth !== 0) continue;
+
+      let following = index + 1;
+      while (this.tokens[following]?.type === TokenType.Newline) following++;
+      return this.tokens[following]?.type === TokenType.LeftBrace;
+    }
+
+    return false;
   }
 
   private finishArguments(closingMessage: string): ParsedArguments {

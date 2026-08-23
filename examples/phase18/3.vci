@@ -1,0 +1,21 @@
+// Phase 18
+// Expected output:
+// 0
+// 1
+// 4
+
+$visits = 0
+
+2.times(round) {
+    print(round)
+
+    list[10, 20, 30].each(value) {
+        $visits = $visits + 1
+
+        if (value == 20) {
+            break
+        }
+    }
+}
+
+print($visits)
