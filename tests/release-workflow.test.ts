@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import { releaseTargets } from "../scripts/release-support.mjs";
 
 const projectRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -17,14 +18,19 @@ function readProjectFile(relativePath: string): string {
 
 test("coordinates a guarded one-start release", () => {
   const workflow = readProjectFile(".github/workflows/release-version.yml");
+  const packageJson = JSON.parse(readProjectFile("package.json")) as {
+    version: string;
+  };
+  const expectedOptions = Object.entries(releaseTargets(packageJson.version))
+    .map(([releaseType, targetVersion]) => {
+      return `          - ${targetVersion} (${releaseType})`;
+    })
+    .join("\n");
 
   assert.match(workflow, /workflow_dispatch:/);
   assert.match(workflow, /version:\n\s+description:/);
   assert.match(workflow, /type: choice/);
-  assert.match(
-    workflow,
-    /options:\n\s+- 0\.17\.1 \(current\)\n\s+- 1\.0\.0 \(major\)\n\s+- 0\.18\.0 \(minor\)\n\s+- 0\.17\.2 \(patch\)/,
-  );
+  assert.ok(workflow.includes(`options:\n${expectedOptions}`));
   assert.doesNotMatch(workflow, /type: string/);
   assert.match(
     workflow,
