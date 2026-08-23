@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Phase: Post-Phase 18 editor support refresh -->
+<idea-plugin>
+    <id>dev.vulci.file-icon</id>
+    <name>Vulci File Icon</name>
+    <vendor>Vulci</vendor>
+    <version>0.1.0</version>
+
+    <description><![CDATA[
+        Shows the Vulci logo for .vci source files while the repository-linked
+        TextMate bundle continues to provide syntax highlighting.
+    ]]></description>
+
+    <idea-version since-build="252"/>
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <fileIconProvider implementation="dev.vulci.jetbrains.icon.VulciFileIconProvider"/>
+    </extensions>
+</idea-plugin>

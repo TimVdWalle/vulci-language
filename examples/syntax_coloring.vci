@@ -1,3 +1,84 @@
-enum Status { Pending }
-$answer = 42
-if ($ready and not false)
+// Phase: Post-Phase 18 editor support refresh
+
+import 'phase15/imported.vci'
+
+// Line comment with true, null, and text that stays a comment.
+/* Nested block comments are supported.
+   /* Keywords such as if and while stay comments here. */
+*/
+
+enum Status {
+    Pending
+    Running
+    Finished
+}
+
+struct User {
+    str name
+    int age = 18
+
+    fn label(str prefix = "User") returns str {
+        prefix ~ self.name
+    }
+}
+
+fn swap(tuple(int, str) value) returns tuple(str, int) {
+    (value[1], value[0])
+}
+
+fn choose(int|str value) returns int|str {
+    value
+}
+
+fn ready() returns bool {
+    true
+}
+
+$status = Status.Pending
+$user = User(name: "Ada", age: 36)
+$profile = object(name: $user.name, active: true)
+$pair = swap((1_000, 'one'))
+$items = list[1, 2, 3]
+$unique = set[1, 2, 2]
+$lookup = map["user": $user, "status": $status]
+$ready = ready
+
+$message = "Status: {{$status}}, label: {{$user.label(prefix: 'Member')}}"
+$multiline = """
+Hello, {{$profile.name}}
+The escaped newline is here: \n
+"""
+$literal = '''
+Single-quoted text keeps {{$message}} literal.
+'''
+
+if ($ready and not false and $status is Status) {
+    print($message)
+} else {
+    print('not ready')
+}
+
+$total = 0
+
+$items.each(int item) {
+    $total = $total + item
+}
+
+3.times(index) {
+    $total = $total + index
+}
+
+while ($total < 10) {
+    $total = $total + 1
+
+    if ($total >= 8) {
+        break
+    }
+}
+
+print(value: $pair)
+print(value: $unique.contains(2))
+print(value: $lookup["user"].name)
+print(value: choose(value: $total))
+print(value: $multiline)
+print(value: $literal)
