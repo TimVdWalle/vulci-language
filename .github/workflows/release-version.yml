@@ -13,10 +13,10 @@ on:
         type: choice
         # RELEASE_VERSION_OPTIONS_START
         options:
-          - 0.17.1 (current)
+          - 0.18.0 (current)
           - 1.0.0 (major)
-          - 0.18.0 (minor)
-          - 0.17.2 (patch)
+          - 0.19.0 (minor)
+          - 0.18.1 (patch)
         # RELEASE_VERSION_OPTIONS_END
 
 concurrency:
