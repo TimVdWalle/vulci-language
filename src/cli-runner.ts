@@ -1,4 +1,4 @@
-// Phase 15B
+// Phase 19
 
 import { readFile } from "node:fs/promises";
 import path from "node:path";
@@ -15,10 +15,23 @@ import {
 } from "./cli-output.js";
 import { Environment } from "./environment.js";
 import { Evaluator } from "./evaluator.js";
+import {
+  ExecutionEnvironment,
+  HostEnvironment,
+  platformEnvironmentNameComparison,
+} from "./execution-environment.js";
 import { Lexer } from "./lexer.js";
 import { Parser } from "./parser.js";
 
-export async function runCli(arguments_: string[]): Promise<number> {
+export interface CliDependencies {
+  hostEnvironment?: HostEnvironment;
+  platform?: NodeJS.Platform;
+}
+
+export async function runCli(
+  arguments_: string[],
+  dependencies: CliDependencies = {},
+): Promise<number> {
   let options;
 
   try {
@@ -28,9 +41,10 @@ export async function runCli(arguments_: string[]): Promise<number> {
     return 1;
   }
 
+  const hostEnvironment = dependencies.hostEnvironment ?? process.env;
   const useColor = shouldUseColor(
     options.noColor,
-    process.env.NO_COLOR,
+    hostEnvironment.NO_COLOR,
     process.stdout,
   );
   const style = createCliStyle(useColor);
@@ -63,7 +77,13 @@ export async function runCli(arguments_: string[]): Promise<number> {
     }
 
     const environment = new Environment();
-    registerBuiltins(environment);
+    const envFilePath = path.join(path.dirname(path.resolve(filePath)), ".env");
+    const executionEnvironment = new ExecutionEnvironment(
+      hostEnvironment,
+      envFilePath,
+      platformEnvironmentNameComparison(dependencies.platform),
+    );
+    registerBuiltins(environment, executionEnvironment);
     new Evaluator(environment).evaluate(program, filePath);
     return 0;
   } catch (error) {

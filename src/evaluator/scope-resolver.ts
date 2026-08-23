@@ -1,5 +1,6 @@
-// Phase 18
+// Phase 19
 
+import { ENVIRONMENT_BUILTIN_NAMES } from "../builtins.js";
 import { Environment } from "../environment.js";
 import { RuntimeValue } from "../runtime-value.js";
 import { TypeChecker } from "./type-checker.js";
@@ -72,6 +73,12 @@ export abstract class ScopeResolver extends TypeChecker {
 
     if (this.functions.has(name)) {
       throw new Error(`Name '${name}' is already defined as a function.`);
+    }
+
+    if (ENVIRONMENT_BUILTIN_NAMES.has(name)) {
+      throw new Error(
+        `Name '${name}' is already defined as a standard-library function.`,
+      );
     }
 
     if (this.currentEnvironment === this.environment) {

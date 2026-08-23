@@ -1,4 +1,4 @@
-// Phase 13
+// Phase 19
 
 import { FunctionCall, FunctionDeclaration, TypeAnnotation } from "../ast.js";
 import { Environment } from "../environment.js";
@@ -17,6 +17,8 @@ export abstract class CallExecutor extends ArgumentBinder {
     nativeFunction: NativeFunctionValue,
     callExpression: FunctionCall,
   ): RuntimeValue {
+    this.assertNativeArgumentCount(nativeFunction, callExpression);
+
     if (nativeFunction.parameters === undefined) {
       const namedArgument = callExpression.argumentNames.find(
         (argumentName) => argumentName !== null,
@@ -34,7 +36,7 @@ export abstract class CallExecutor extends ArgumentBinder {
         this.evaluateExpression(argument),
       );
 
-      return nativeFunction.call(arguments_);
+      return nativeFunction.call(arguments_, callExpression);
     }
 
     const boundArguments = this.bindSuppliedArguments(
@@ -43,10 +45,19 @@ export abstract class CallExecutor extends ArgumentBinder {
       callExpression,
     );
 
-    const arguments_: RuntimeValue[] = boundArguments.map((argument, index) => {
-      if (argument !== undefined) return argument;
+    const arguments_: RuntimeValue[] = [];
+
+    for (let index = 0; index < boundArguments.length; index++) {
+      const argument = boundArguments[index];
+
+      if (argument !== undefined) {
+        arguments_.push(argument);
+        continue;
+      }
 
       const parameter = nativeFunction.parameters[index];
+
+      if (parameter?.omittable === true) continue;
 
       throw new Error(
         `Native function '${callExpression.callee}' has no value for ` +
@@ -54,9 +65,34 @@ export abstract class CallExecutor extends ArgumentBinder {
           `${callExpression.calleeToken.line}:` +
           `${callExpression.calleeToken.column}`,
       );
-    });
+    }
 
-    return nativeFunction.call(arguments_);
+    return nativeFunction.call(arguments_, callExpression);
+  }
+
+  private assertNativeArgumentCount(
+    nativeFunction: NativeFunctionValue,
+    callExpression: FunctionCall,
+  ): void {
+    if (!nativeFunction.codedArgumentCount) return;
+
+    const minimum = nativeFunction.parameters.filter(
+      (parameter) => parameter.required,
+    ).length;
+    const maximum = nativeFunction.parameters.length;
+    const received = callExpression.arguments.length;
+
+    if (received >= minimum && received <= maximum) return;
+
+    const expected =
+      minimum === maximum ? `${minimum}` : `${minimum} or ${maximum}`;
+
+    throw new Error(
+      `E_ARG_COUNT: Function '${callExpression.callee}' expects ${expected} ` +
+        `arguments, but received ${received}. at ` +
+        `${callExpression.calleeToken.line}:` +
+        `${callExpression.calleeToken.column}`,
+    );
   }
 
   protected callFunction(

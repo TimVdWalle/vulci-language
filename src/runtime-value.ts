@@ -1,4 +1,6 @@
-// Phase 16
+// Phase 19
+
+import type { FunctionCall } from "./ast.js";
 
 export type RuntimeValue =
   | IntegerValue
@@ -88,12 +90,14 @@ export interface EnumValue {
 export interface NativeFunctionParameter {
   name: string;
   required: boolean;
+  omittable?: boolean;
 }
 
 export interface NativeFunctionValue {
   type: "NativeFunction";
   parameters: NativeFunctionParameter[];
-  call(arguments_: RuntimeValue[]): RuntimeValue;
+  codedArgumentCount?: boolean;
+  call(arguments_: RuntimeValue[], expression: FunctionCall): RuntimeValue;
 }
 
 export const TRUE_VALUE: BooleanValue = {
