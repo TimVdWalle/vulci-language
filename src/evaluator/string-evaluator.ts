@@ -1,4 +1,4 @@
-// Phase 16
+// Phase 19
 
 import { MemberCall, StringLiteral } from "../ast.js";
 import {
@@ -82,6 +82,42 @@ export abstract class StringEvaluator extends CollectionEvaluator {
         return result;
       }
 
+      case "toInt": {
+        this.requireMemberArgumentCount(expression, arguments_.length, 0);
+
+        if (!/^-?[0-9]+$/.test(receiver.value)) {
+          throw this.conversionError(
+            expression,
+            "E_CONV_INT",
+            "String cannot be converted to int.",
+          );
+        }
+
+        const converted = Number(receiver.value);
+
+        if (!Number.isSafeInteger(converted)) {
+          throw this.conversionError(
+            expression,
+            "E_CONV_INT",
+            "String cannot be converted to int.",
+          );
+        }
+
+        return { type: "Integer", value: converted };
+      }
+
+      case "toBool":
+        this.requireMemberArgumentCount(expression, arguments_.length, 0);
+
+        if (receiver.value === "true") return TRUE_VALUE;
+        if (receiver.value === "false") return FALSE_VALUE;
+
+        throw this.conversionError(
+          expression,
+          "E_CONV_BOOL",
+          "String cannot be converted to bool.",
+        );
+
       default:
         throw new Error(
           `E_MEM_UNKNOWN: Unknown string member '${expression.member.lexeme}'. ` +
@@ -101,6 +137,17 @@ export abstract class StringEvaluator extends CollectionEvaluator {
       `E_ARG_COUNT: Member '${expression.member.lexeme}' expects ${expected} ` +
         `argument${expected === 1 ? "" : "s"}, but received ${received}. ` +
         `at ${expression.member.line}:${expression.member.column}`,
+    );
+  }
+
+  private conversionError(
+    expression: MemberCall,
+    code: string,
+    message: string,
+  ): Error {
+    return new Error(
+      `${code}: ${message} at ${expression.member.line}:` +
+        `${expression.member.column}`,
     );
   }
 

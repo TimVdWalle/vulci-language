@@ -1,0 +1,7 @@
+// Phase 19
+
+$port = env("PORT", fallback: "8080").toInt()
+$debug = env("DEBUG", fallback: "false").toBool()
+
+print(value: $port)
+print(value: $debug)

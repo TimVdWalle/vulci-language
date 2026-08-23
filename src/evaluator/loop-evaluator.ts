@@ -1,6 +1,7 @@
-// Phase 18
+// Phase 19
 
 import { BreakExpression, TimesExpression, WhileExpression } from "../ast.js";
+import { ENVIRONMENT_BUILTIN_NAMES } from "../builtins.js";
 import { NULL_VALUE, RuntimeValue } from "../runtime-value.js";
 import { BreakSignal } from "./break-signal.js";
 import { ActiveLoopBinding } from "./evaluator-context.js";
@@ -116,6 +117,7 @@ export abstract class LoopEvaluator extends StructEvaluator {
 
       if (
         name === "self" ||
+        ENVIRONMENT_BUILTIN_NAMES.has(name) ||
         names.has(name) ||
         bindingScope.has(name) ||
         visibleLocal

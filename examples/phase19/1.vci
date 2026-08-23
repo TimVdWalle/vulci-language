@@ -1,0 +1,4 @@
+// Phase 19
+
+$applicationEnvironment = env("APP_ENV", fallback: "development")
+print(value: $applicationEnvironment)

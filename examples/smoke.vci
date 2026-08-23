@@ -1,8 +1,8 @@
-// Phase 18
+// Phase 19
 // Expected output: Phase13Counter(value: 15, step: 2)
 //                  Phase14Status.Running
 //                  map["items": list[1, 2, 3]]
-//                  SMOKE OK: 1404
+//                  SMOKE OK: 1423
 
 import 'phase15/imported.vci'
 
@@ -362,6 +362,18 @@ $phase18_score = if (
     and $phase18_each == 1
     and 2.times() { } == 2
 ) { 18 } else { 0 }
+$phase19_value = env("VULCI_PHASE19_SMOKE_2938E545", fallback: "19")
+$phase19_missing = env("VULCI_PHASE19_MISSING_2938E545")
+$phase19_boolean = env(
+    "VULCI_PHASE19_BOOL_2938E545",
+    fallback: "false",
+).toBool()
+reloadEnv()
+$phase19_score = if (
+    $phase19_value.toInt() == 19
+    and $phase19_missing == null
+    and $phase19_boolean == false
+) { 19 } else { 0 }
 $result = $checksum
     + $existing_boolean_score
     + $existing_null_score
@@ -383,6 +395,7 @@ $result = $checksum
     + $phase16_score
     + $phase17_score
     + $phase18_score
+    + $phase19_score
 print(value: "SMOKE OK: {{$result}}")
 $unused_null = return_null()
 
