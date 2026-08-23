@@ -1,9 +1,9 @@
-<!-- Phase: Phase 18 counted loops -->
+<!-- Phase: Phase 19 environment access -->
 <!-- Document ID: implementation-phases -->
-<!-- Version: 22 -->
+<!-- Version: 25 -->
 <!-- Status: Active -->
 <!-- Authority: Implementation order, phase scope, dependencies, and completion criteria -->
-<!-- Supersedes: implementation-phases v21 -->
+<!-- Supersedes: implementation-phases v24 -->
 
 # Implementation Phases
 
@@ -485,7 +485,22 @@ coverage before collection work begins.
 
 ## `ph19` Environment access — Standard library
 
-- `lib01` Environment variables
+- `lib01` Read-only `env(name)` and `env(name, fallback: fallback)` access to
+  the current execution-environment snapshot, plus explicit `reloadEnv()`
+  replacement of its `.env` layer
+- Present empty strings remain distinct from missing variables; all environment
+  values and fallbacks are strings
+- General strict `str.toInt()` and `str.toBool()` conversions, with
+  `E_CONV_INT` and `E_CONV_BOOL`
+- Automatic optional entry-adjacent `.env` loading, with host-environment
+  precedence, no parent search, profiles, or expansion, and deterministic
+  explicit host-environment injection for tests and embedding
+- `.env` parsing and `E_ENV_FILE_READ` / `E_ENV_FILE_FORMAT` diagnostics without
+  leaking environment values
+- Atomic reload failure, deleted-file, post-reload precedence, and imported-code
+  visibility tests
+- Built-in, runtime, argument, conversion, diagnostic, regression, coverage,
+  smoke, and platform-boundary tests
 
 **Result:** Programs can read their execution environment.
 

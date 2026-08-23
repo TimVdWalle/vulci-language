@@ -1,9 +1,9 @@
-<!-- Phase: Phase 18 counted loops -->
+<!-- Phase: Phase 19 environment access -->
 <!-- Document ID: syntax-collections -->
-<!-- Version: 13 -->
+<!-- Version: 14 -->
 <!-- Status: Active -->
 <!-- Authority: Accepted string- and collection-specific Vulci syntax -->
-<!-- Supersedes: syntax-collections v12 -->
+<!-- Supersedes: syntax-collections v13 -->
 
 # Vulci Collection Syntax Specification
 
@@ -261,6 +261,8 @@ left + right
 left ~ right
 text.contains(value)
 text.count()
+text.toInt()
+text.toBool()
 left == right
 left != right
 left < right
@@ -274,8 +276,9 @@ shares the precedence level of binary `+` and `-`, and operators at that level a
 left-associative. Parentheses are recommended for readability when `+` and `~`
 are mixed in one expression, but they are not required by the syntax.
 `contains(value)` and `count()` use ordinary method-call syntax. Strings also
-support the ordinary equality and ordering operators. `.length` is not an
-accepted synonym; strings use `count()` consistently with collections.
+support the ordinary equality and ordering operators. `toInt()` and `toBool()`
+use ordinary zero-argument method-call syntax. `.length` is not an accepted
+synonym; strings use `count()` consistently with collections.
 
 String indexing uses the accepted bracket syntax shown above. String slicing and
 repetition are not accepted.

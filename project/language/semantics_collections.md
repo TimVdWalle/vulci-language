@@ -1,9 +1,9 @@
-<!-- Phase: Phase 18 counted loops -->
+<!-- Phase: Phase 19 environment access -->
 <!-- Document ID: semantics-collections -->
-<!-- Version: 14 -->
+<!-- Version: 15 -->
 <!-- Status: Active -->
 <!-- Authority: Accepted string and collection semantics -->
-<!-- Supersedes: semantics-collections v13 -->
+<!-- Supersedes: semantics-collections v14 -->
 
 # Collection Semantics Specification
 
@@ -474,6 +474,25 @@ implementation may use the Unicode version supplied by its runtime or Unicode
 library. For other collection-capable values, it returns the item count for
 lists, member count for sets, and entry count for maps.
 
+## `toInt`
+
+`str.toInt()` accepts no arguments. It converts only a complete ASCII decimal
+integer representation: an optional ASCII `-` followed by one or more ASCII
+digits. It does not accept whitespace, an ASCII `+`, digit separators, or
+partial text.
+
+The successful result is the corresponding `int`. A result outside the range
+supported by the active implementation is invalid. Invalid text and an
+out-of-range result produce `E_CONV_INT` at the `toInt` member.
+
+## `toBool`
+
+`str.toBool()` accepts no arguments. It converts exactly the lowercase strings
+`true` and `false` to their corresponding Boolean values. It does not use
+truthiness or accept other spellings or representations.
+
+Any other string produces `E_CONV_BOOL` at the `toBool` member.
+
 ---
 
 # 14. String Interpolation
@@ -515,6 +534,8 @@ implementation can determine one. The accepted codes are:
 - `E_IPL_CLOSE` — closing interpolation delimiter without a matching opening delimiter
 - `E_IPL_UNCLOSED` — unterminated interpolation
 - `E_IPL_TYPE` — unsupported final interpolation result type
+- `E_CONV_INT` — a string cannot be converted to an integer
+- `E_CONV_BOOL` — a string cannot be converted to a Boolean
 
 Invalid member calls use these general runtime diagnostic codes:
 
