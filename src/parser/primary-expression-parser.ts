@@ -1,4 +1,4 @@
-// Phase 16
+// Phase 18
 
 import {
   BooleanLiteral,
@@ -93,6 +93,14 @@ export abstract class PrimaryExpressionParser extends CallParser {
 
     if (this.match(TokenType.If)) {
       return this.conditionalExpression(this.previous());
+    }
+
+    if (this.match(TokenType.While)) {
+      return this.whileExpression(this.previous());
+    }
+
+    if (this.match(TokenType.Break)) {
+      return this.breakExpression(this.previous());
     }
 
     if (this.match(TokenType.Return)) {

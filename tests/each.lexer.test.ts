@@ -1,4 +1,4 @@
-// Phase 17
+// Phase 18
 
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -34,11 +34,11 @@ test("lexes each as a contextual identifier with its delimiters", () => {
   assert.equal(tokens[2]?.lexeme, "each");
 });
 
-test("does not introduce break or continue keywords", () => {
+test("reserves break while keeping each and continue contextual", () => {
   const tokens = new Lexer("each break continue").lex();
 
   assert.deepEqual(
     tokens.slice(0, -1).map((token) => token.type),
-    [TokenType.Identifier, TokenType.Identifier, TokenType.Identifier],
+    [TokenType.Identifier, TokenType.Break, TokenType.Identifier],
   );
 });

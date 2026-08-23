@@ -1,4 +1,4 @@
-// Phase 15
+// Phase 18
 
 export enum TokenType {
   Integer,
@@ -9,6 +9,8 @@ export enum TokenType {
   Null,
   If,
   Else,
+  While,
+  Break,
   Fn,
   Struct,
   Enum,

@@ -1,7 +1,12 @@
-// Phase 17
+// Phase 18
 
 import { Token } from "./token.js";
 import type { EachExpression } from "./each-ast.js";
+import type {
+  BreakExpression,
+  TimesExpression,
+  WhileExpression,
+} from "./loop-ast.js";
 import type {
   CollectionLiteral,
   CollectionTypeMember,
@@ -16,6 +21,11 @@ export type {
   SetLiteral,
 } from "./collection-ast.js";
 export type { EachBinding, EachExpression } from "./each-ast.js";
+export type {
+  BreakExpression,
+  TimesExpression,
+  WhileExpression,
+} from "./loop-ast.js";
 
 export interface Program {
   type: "Program";
@@ -53,6 +63,9 @@ export type Expression =
   | FunctionCall
   | MemberCall
   | EachExpression
+  | TimesExpression
+  | WhileExpression
+  | BreakExpression
   | MemberAccess
   | IndexExpression
   | ReturnExpression

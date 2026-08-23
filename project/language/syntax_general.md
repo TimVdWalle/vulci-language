@@ -1,9 +1,9 @@
 <!-- Phase: Phase 18 counted loops -->
 <!-- Document ID: syntax-general -->
-<!-- Version: 31 -->
+<!-- Version: 32 -->
 <!-- Status: Active -->
 <!-- Authority: Accepted non-collection-specific Vulci syntax -->
-<!-- Supersedes: syntax-general v30 -->
+<!-- Supersedes: syntax-general v31 -->
 
 # General Syntax Specification
 
@@ -904,6 +904,9 @@ Reason: Names improve readability once calls become larger.
 ---
 
 # 9. Control Flow
+
+`while` and `break` are reserved keywords and cannot be used as identifiers.
+The names `each`, `times`, `continue`, and `loop` remain unreserved.
 
 ## Scope
 

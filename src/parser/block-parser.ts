@@ -1,4 +1,4 @@
-// Phase 15B
+// Phase 18
 
 import {
   ConditionalBranch,
@@ -108,6 +108,16 @@ export abstract class BlockParser extends TypeParser {
         throw this.error(
           this.peek(),
           "Unreachable expression after unconditional return.",
+        );
+      }
+
+      if (
+        expression.type === "BreakExpression" &&
+        !this.check(TokenType.RightBrace)
+      ) {
+        throw this.error(
+          this.peek(),
+          "Unreachable expression after unconditional break.",
         );
       }
     }

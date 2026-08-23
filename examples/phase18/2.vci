@@ -1,0 +1,19 @@
+// Phase 18
+// Expected output:
+// 1
+// 2
+// 3
+// null
+
+$current = 0
+
+$result = while ($current < 10) {
+    $current = $current + 1
+    print($current)
+
+    if ($current == 3) {
+        break
+    }
+}
+
+print($result)

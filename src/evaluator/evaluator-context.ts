@@ -1,4 +1,4 @@
-// Phase 17
+// Phase 18
 
 import {
   EnumDeclaration,
@@ -8,8 +8,14 @@ import {
   TypeAnnotation,
 } from "../ast.js";
 import { Environment } from "../environment.js";
-import type { EachBinding } from "../each-ast.js";
 import { RuntimeValue, StructValue } from "../runtime-value.js";
+import { Token } from "../token.js";
+
+export interface ActiveLoopBinding {
+  name: Token;
+  bindingType: TypeAnnotation | null;
+  kind: "each" | "times";
+}
 
 export type DefaultEvaluationContext = "function" | "struct" | null;
 
@@ -25,11 +31,11 @@ export abstract class EvaluatorContext {
   protected currentParameterTypes = new Map<string, TypeAnnotation | null>();
   protected currentSelf: StructValue | null = null;
   protected defaultEvaluationContext: DefaultEvaluationContext = null;
-  private readonly eachBindings = new WeakMap<
+  private readonly loopBindings = new WeakMap<
     Environment,
-    Map<string, EachBinding>
+    Map<string, ActiveLoopBinding>
   >();
-  private readonly eachValues = new WeakMap<
+  private readonly loopValues = new WeakMap<
     Environment,
     Map<string, RuntimeValue>
   >();
@@ -38,34 +44,34 @@ export abstract class EvaluatorContext {
     this.currentEnvironment = environment;
   }
 
-  protected eachBindingScope(): Map<string, EachBinding> {
-    let bindings = this.eachBindings.get(this.currentEnvironment);
+  protected loopBindingScope(): Map<string, ActiveLoopBinding> {
+    let bindings = this.loopBindings.get(this.currentEnvironment);
 
     if (bindings === undefined) {
-      bindings = new Map<string, EachBinding>();
-      this.eachBindings.set(this.currentEnvironment, bindings);
+      bindings = new Map<string, ActiveLoopBinding>();
+      this.loopBindings.set(this.currentEnvironment, bindings);
     }
 
     return bindings;
   }
 
-  protected eachBindingValue(name: string): RuntimeValue | undefined {
-    return this.eachValues.get(this.currentEnvironment)?.get(name);
+  protected loopBindingValue(name: string): RuntimeValue | undefined {
+    return this.loopValues.get(this.currentEnvironment)?.get(name);
   }
 
-  protected defineEachBindingValue(name: string, value: RuntimeValue): void {
-    let values = this.eachValues.get(this.currentEnvironment);
+  protected defineLoopBindingValue(name: string, value: RuntimeValue): void {
+    let values = this.loopValues.get(this.currentEnvironment);
 
     if (values === undefined) {
       values = new Map<string, RuntimeValue>();
-      this.eachValues.set(this.currentEnvironment, values);
+      this.loopValues.set(this.currentEnvironment, values);
     }
 
     values.set(name, value);
   }
 
-  protected deleteEachBindingValue(name: string): void {
-    this.eachValues.get(this.currentEnvironment)?.delete(name);
+  protected deleteLoopBindingValue(name: string): void {
+    this.loopValues.get(this.currentEnvironment)?.delete(name);
   }
 
   protected abstract evaluateExpression(expression: Expression): RuntimeValue;

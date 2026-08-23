@@ -1,0 +1,20 @@
+// Phase 17
+// Expected output:
+// á
+// b
+// áb
+// 2
+// 1
+
+$joined = ""
+
+"áb".each(str grapheme) {
+    print(grapheme)
+    $joined = $joined + grapheme
+}
+
+print($joined)
+
+set[2, 1, 2].each(int item) {
+    print(item)
+}

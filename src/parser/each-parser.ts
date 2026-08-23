@@ -1,4 +1,4 @@
-// Phase 17
+// Phase 18
 
 import { EachBinding, EachExpression, Expression } from "../ast.js";
 import { Token, TokenType } from "../token.js";
@@ -55,7 +55,7 @@ export abstract class EachParser extends CollectionLiteralParser {
       receiver,
       keyword,
       bindings,
-      expressions: this.eachExpressionBlock(),
+      expressions: this.loopExpressionBlock("each"),
     };
   }
 
@@ -96,40 +96,5 @@ export abstract class EachParser extends CollectionLiteralParser {
     }
 
     return { name, bindingType };
-  }
-
-  private eachExpressionBlock(): Expression[] {
-    this.skipNewlines();
-    this.consume(TokenType.LeftBrace, "Expected '{' before each body.");
-    this.skipNewlines();
-
-    const expressions: Expression[] = [];
-
-    while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
-      const expression = this.expression();
-      expressions.push(expression);
-
-      if (this.check(TokenType.RightBrace)) break;
-
-      if (this.isAtEnd()) {
-        throw this.error(this.peek(), "Expected '}' after each body.");
-      }
-
-      this.consume(TokenType.Newline, "Expected a newline after expression.");
-      this.skipNewlines();
-
-      if (
-        expression.type === "ReturnExpression" &&
-        !this.check(TokenType.RightBrace)
-      ) {
-        throw this.error(
-          this.peek(),
-          "Unreachable expression after unconditional return.",
-        );
-      }
-    }
-
-    this.consume(TokenType.RightBrace, "Expected '}' after each body.");
-    return expressions;
   }
 }

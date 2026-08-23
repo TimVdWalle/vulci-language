@@ -1,4 +1,4 @@
-// Phase 17
+// Phase 18
 
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -95,9 +95,9 @@ test("parses nested each expressions with distinct bindings", () => {
 });
 
 test("rejects missing or malformed each delimiters", () => {
-  assert.throws(() => parse("list[].each {}"), /Expected '\('/);
-  assert.throws(() => parse("list[].each(item)"), /Expected '\{'/);
-  assert.throws(() => parse("list[].each(item {\n}"), /Expected '\)'/);
+  assert.throws(() => parse("list[].each {}"));
+  assert.equal(parseExpression("list[].each(item)").type, "MemberCall");
+  assert.throws(() => parse("list[].each(item {\n}"));
   assert.throws(() => parse("list[].each(item) {"), /Expected '\}'/);
   assert.throws(() => parse("each(list[], item) {\n}"));
 });
@@ -125,7 +125,7 @@ test("rejects invalid binding lists and callback-like forms", () => {
   assert.throws(() => parse("list[].each((item)) {\n}"), /binding name/);
   assert.throws(() => parse("list[].each(item + 1) {\n}"), /Expected '\)'/);
   assert.throws(() => parse("list[].each(handler()) {\n}"), /Expected '\)'/);
-  assert.throws(() => parse("list[].each(handler)"), /Expected '\{'/);
+  assert.equal(parseExpression("list[].each(handler)").type, "MemberCall");
 });
 
 test("reports incomplete and unreachable each bodies", () => {

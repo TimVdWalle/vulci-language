@@ -1,0 +1,22 @@
+// Phase 17
+// Expected output:
+// a
+// 1
+// b
+// 2
+// 90
+// map["a": 1, "b": 2, "c": 3]
+
+$total = 0
+
+$result = map["a": 1, "b": 2].each(int value, str key) {
+    print(key)
+    print(value)
+
+    list[10, 20].each(int multiplier) {
+        $total = $total + value * multiplier
+    }
+}.add("c", 3)
+
+print($total)
+print($result)

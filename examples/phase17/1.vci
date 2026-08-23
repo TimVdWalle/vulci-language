@@ -1,0 +1,18 @@
+// Phase 17
+// Expected output:
+// 1
+// 2
+// 3
+// 6
+// list[1, 2, 3]
+
+$items = list[1, 2, 3]
+$total = 0
+
+$unchanged = $items.each(int item) {
+    print(item)
+    $total = $total + item
+}
+
+print($total)
+print($unchanged)
